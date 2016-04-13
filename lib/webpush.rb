@@ -39,7 +39,6 @@ module Webpush
         req = Net::HTTP::Post.new(uri.request_uri, header)
         req.body = payload[:ciphertext]
         res = http.request(req)
-        p res.body
         return ("201" == res.code) ? true : false
       rescue
         return false
