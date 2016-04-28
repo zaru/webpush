@@ -33,7 +33,8 @@ module Webpush
             "Content-Type" => "application/octet-stream",
             "Content-Encoding" => "aesgcm",
             "Encryption" => "salt=#{Base64.urlsafe_encode64(payload[:salt]).delete('=')}",
-            "Crypto-Key" => "dh=#{Base64.urlsafe_encode64(payload[:server_public_key_bn]).delete('=')}"
+            "Crypto-Key" => "dh=#{Base64.urlsafe_encode64(payload[:server_public_key_bn]).delete('=')}",
+            "Ttl"        => "2419200"
         }
         header["Authorization"] = "key=#{api_key}" unless api_key.empty?
         req = Net::HTTP::Post.new(uri.request_uri, header)
