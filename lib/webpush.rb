@@ -1,9 +1,11 @@
-require 'webpush/version'
 require 'openssl'
 require 'base64'
 require 'hkdf'
 require 'net/http'
 require 'json'
+
+require 'webpush/version'
+require 'webpush/encryption'
 
 module Webpush
 
