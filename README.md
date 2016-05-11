@@ -22,7 +22,7 @@ Or install it yourself as:
 
 ## Usage
 
-```
+```ruby
 message = {
   title: "title",
   body: "body",
@@ -30,12 +30,12 @@ message = {
 }
 
 Webpush.payload_send(
-                     message: JSON.generate(message),
-                     endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
-                     p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
-                     auth: "aW1hcmthcmFpa3V6ZQ==",
-                     api_key: "[GoogleDeveloper APIKEY]" # optional, not used in Firefox.
-                     )
+  message: JSON.generate(message),
+  endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
+  p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
+  auth: "aW1hcmthcmFpa3V6ZQ==",
+  api_key: "[GoogleDeveloper APIKEY]" # optional, not used in Firefox.
+)
 ```
 
 ### ServiceWorker sample
@@ -44,7 +44,7 @@ see. https://github.com/zaru/web-push-sample
 
 p256dh and auth generate sample code.
 
-```
+```javascript
 navigator.serviceWorker.ready.then(function(sw) {
   Notification.requestPermission(function(permission) {
     if(permission !== 'denied') {
@@ -63,7 +63,7 @@ navigator.serviceWorker.ready.then(function(sw) {
 
 payloads received sample code.
 
-```
+```javascript
 self.addEventListener("push", function(event) {
   var json = event.data.json();
   self.registration.showNotification(json.title, {
