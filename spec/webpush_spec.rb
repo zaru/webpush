@@ -28,6 +28,10 @@ describe Webpush do
       }
     end
 
+    before do
+      allow(Webpush::Encryption).to receive(:encrypt).and_return(payload)
+    end
+
     it 'calls the relevant service with the correct headers' do
       expect(Webpush::Encryption).to receive(:encrypt).and_return(payload)
 
@@ -38,6 +42,23 @@ describe Webpush do
       result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
 
       expect(result).to be(true)
+    end
+
+    it 'returns false for unsuccessful status code by default' do
+      stub_request(:post, expected_endpoint).
+        to_return(:status => 401, :body => "", :headers => {})
+
+      result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
+
+      expect(result).to be(false)
+    end
+
+    it 'returns false on error by default' do
+      stub_request(:post, expected_endpoint).to_raise(StandardError)
+
+      result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
+
+      expect(result).to be(false)
     end
   end
 
