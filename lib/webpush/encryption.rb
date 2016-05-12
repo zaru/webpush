@@ -42,9 +42,9 @@ module Webpush
 
     private
 
-    def create_context(clientPublicKey, serverPublicKey)
-      c = convert16bit(clientPublicKey)
-      s = convert16bit(serverPublicKey)
+    def create_context(client_public_key, server_public_key)
+      c = convert16bit(client_public_key)
+      s = convert16bit(server_public_key)
       context = "\0"
       context += [c.bytesize].pack("n*")
       context += c
