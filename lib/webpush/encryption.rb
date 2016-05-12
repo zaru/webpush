@@ -20,15 +20,15 @@ module Webpush
 
       client_auth_token = Base64.urlsafe_decode64(auth)
 
-      prk = HKDF.new(shared_secret, :salt => client_auth_token, :algorithm => 'SHA256', :info => "Content-Encoding: auth\0").next_bytes(32)
+      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: "Content-Encoding: auth\0").next_bytes(32)
 
       context = create_context(client_public_key_bn, server_public_key_bn)
 
       content_encryption_key_info = create_info('aesgcm', context)
-      content_encryption_key = HKDF.new(prk, :salt => salt, :info => content_encryption_key_info).next_bytes(16)
+      content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).next_bytes(16)
 
       nonce_info = create_info('nonce', context)
-      nonce = HKDF.new(prk, :salt => salt, :info => nonce_info).next_bytes(12)
+      nonce = HKDF.new(prk, salt: salt, info: nonce_info).next_bytes(12)
 
       ciphertext = encrypt_payload(message, content_encryption_key, nonce)
 

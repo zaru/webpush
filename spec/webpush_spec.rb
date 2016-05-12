@@ -37,7 +37,7 @@ describe Webpush do
 
       stub_request(:post, expected_endpoint).
         with(body: expected_body, headers: expected_headers).
-        to_return(:status => 201, :body => "", :headers => {})
+        to_return(status: 201, body: "", headers: {})
 
       result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
 
@@ -46,7 +46,7 @@ describe Webpush do
 
     it 'returns false for unsuccessful status code by default' do
       stub_request(:post, expected_endpoint).
-        to_return(:status => 401, :body => "", :headers => {})
+        to_return(status: 401, body: "", headers: {})
 
       result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
 
@@ -67,7 +67,7 @@ describe Webpush do
 
       stub_request(:post, expected_endpoint).
         with(body: expected_body, headers: expected_headers).
-        to_return(:status => 201, :body => "", :headers => {})
+        to_return(status: 201, body: "", headers: {})
 
       Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: api_key)
     end
@@ -75,7 +75,7 @@ describe Webpush do
     it 'does not insert Authorization header when blank' do
       stub_request(:post, expected_endpoint).
         with(body: expected_body, headers: expected_headers).
-        to_return(:status => 201, :body => "", :headers => {})
+        to_return(status: 201, body: "", headers: {})
 
       Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: "")
       Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: nil)
