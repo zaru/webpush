@@ -35,7 +35,7 @@ module Webpush
           "Crypto-Key" => "dh=#{Base64.urlsafe_encode64(payload[:server_public_key_bn]).delete('=')}",
           "Ttl"        => "2419200"
       }
-      header["Authorization"] = "key=#{api_key}" unless api_key.empty?
+      header["Authorization"] = "key=#{api_key}" unless api_key.nil? || api_key.empty?
       req = Net::HTTP::Post.new(uri.request_uri, header)
       req.body = payload[:ciphertext]
       res = http.request(req)
