@@ -7,13 +7,14 @@ describe Webpush do
 
   shared_examples 'request headers' do
     let(:message) { JSON.generate({ body: 'body' }) }
-    let(:p256dh) { 'BJSoGlbnOdsRScNlGmzKirnX9gF7XG1rGgIwP_BkxUcnQ7U_ezqSxyyu_Ghs17nom_orwTYctWfj2ZJsbqNj748' }
-    let(:auth) { '2H6Lqvlpul3hdBqDNbCytw' }
-    let(:ciphertext) { "\xA5A4e*\xBE\x95\xC7\xE6&\xBA\x05\x15\x00E\x11eQ\xAA!\"\xE7<\xB6\x93\x00}\xE5H\xB4N_\xD8" }
+    let(:p256dh) { 'BN4GvZtEZiZuqFxSKVZfSfluwKBD7UxHNBmWkfiZfCtgDE8Bwh-_MtLXbBxTBAWH9r7IPKL0lhdcaqtL1dfxU5E=' }
+    let(:auth) { 'Q2BoAjC09xH3ywDLNJr-dA==' }
+    let(:ciphertext) { "+\xB8\xDBT}\x13\xB6\xDD.\xF9\xB0\xA7\xC8\xD2\x80\xFD\x99#\xF7\xAC\x83\xA4\xDB,\x1F\xB5\xB9w\x85>\xF7\xADr" }
     let(:salt) { "X\x97\x953\xE4X\xF8_w\xE7T\x95\xC51q\xFE" }
     let(:server_public_key_bn) { "\x04\b-RK9w\xDD$\x16lFz\xF9=\xB4~\xC6\x12k\xF3\xF40t\xA9\xC1\fR\xC3\x81\x80\xAC\f\x7F\xE4\xCC\x8E\xC2\x88 n\x8BB\xF1\x9C\x14\a\xFA\x8D\xC9\x80\xA1\xDDyU\\&c\x01\x88#\x118Ua" }
-    let(:payload) { { ciphertext: ciphertext, salt: salt, server_public_key_bn: server_public_key_bn } }
-    let(:expected_body) { "\xA5A4e*\xBE\x95\xC7\xE6&\xBA\u0005\u0015\u0000E\u0011eQ\xAA!\"\xE7<\xB6\x93\u0000}\xE5H\xB4N_\xD8" }
+    let(:shared_secret) { "\t\xA7&\x85\t\xC5m\b\xA8\xA7\xF8B{1\xADk\xE1y'm\xEDE\xEC\xDD\xEDj\xB3$s\xA9\xDA\xF0" }
+    let(:payload) { { ciphertext: ciphertext, salt: salt, server_public_key_bn: server_public_key_bn, shared_secret: shared_secret } }
+    let(:expected_body) { "+\xB8\xDBT}\x13\xB6\xDD.\xF9\xB0\xA7\xC8\xD2\x80\xFD\x99#\xF7\xAC\x83\xA4\xDB,\x1F\xB5\xB9w\x85>\xF7\xADr" }
     let(:expected_headers) do
       {
         'Accept'=>'*/*',
@@ -26,9 +27,9 @@ describe Webpush do
         'User-Agent'=>'Ruby'
       }
     end
-    
+
     it 'calls the relevant service with the correct headers' do
-      expect(Webpush).to receive(:encrypt).and_return(payload)
+      expect(Webpush::Encryption).to receive(:encrypt).and_return(payload)
 
       stub_request(:post, expected_endpoint).
         with(body: expected_body, headers: expected_headers).
