@@ -1,10 +1,9 @@
 module Webpush
   class Request
-    def initialize(endpoint, payload, options)
+    def initialize(endpoint, options)
       @endpoint = endpoint
-      @payload = payload
-
       @options = default_options.merge(options)
+      @payload = @options.delete(:payload) || {}
     end
 
     def perform
@@ -12,8 +11,8 @@ module Webpush
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      req = Net::HTTP::Post.new(uri.request_uri, request_headers)
-      req.body = request_body
+      req = Net::HTTP::Post.new(uri.request_uri, headers)
+      req.body = body
       res = http.request(req)
       res.code == "201"
     rescue
@@ -22,7 +21,23 @@ module Webpush
 
     private
 
-    def request_body
+    def headers
+      headers = {}
+      headers["Content-Type"] = "application/octet-stream"
+      headers["Ttl"]          = ttl
+
+      if encrypted_payload?
+        headers["Content-Encoding"] = "aesgcm"
+        headers["Encryption"] = "salt=#{salt_param}"
+        headers["Crypto-Key"] = "dh=#{dh_param}"
+      end
+
+      headers["Authorization"] = "key=#{api_key}" if api_key?
+
+      headers
+    end
+
+    def body
       @payload.fetch(:ciphertext, "")
     end
 
@@ -40,22 +55,6 @@ module Webpush
 
     def encrypted_payload?
       [:ciphertext, :server_public_key_bn, :salt].all? { |key| @payload.has_key?(key) }
-    end
-
-    def request_headers
-      headers = {}
-      headers["Content-Type"] = "application/octet-stream"
-      headers["Ttl"]          = ttl
-
-      if encrypted_payload?
-        headers["Content-Encoding"] = "aesgcm"
-        headers["Encryption"] = "salt=#{salt_param}"
-        headers["Crypto-Key"] = "dh=#{dh_param}"
-      end
-
-      headers["Authorization"] = "key=#{api_key}" if api_key?
-
-      headers
     end
 
     def dh_param

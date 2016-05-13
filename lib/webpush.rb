@@ -20,7 +20,7 @@ module Webpush
 
       payload = build_payload(message, p256dh, auth)
 
-      Webpush::Request.new(endpoint, payload, options).perform
+      Webpush::Request.new(endpoint, options.merge(payload: payload)).perform
     end
 
     private
