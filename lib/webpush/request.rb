@@ -16,7 +16,7 @@ module Webpush
       req.body = request_body
       res = http.request(req)
       res.code == "201"
-    rescue StandardError => e
+    rescue
       false
     end
 
