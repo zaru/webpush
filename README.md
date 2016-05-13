@@ -1,5 +1,7 @@
 # WebPush
 
+[![Code Climate](https://codeclimate.com/github/zaru/webpush/badges/gpa.svg)](https://codeclimate.com/github/zaru/webpush)
+
 This Gem will send the Web Push API. It supports the encryption necessary to payload.
 
 Payload is supported by Chrome50+, Firefox48+.
