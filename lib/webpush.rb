@@ -6,6 +6,7 @@ require 'json'
 
 require 'webpush/version'
 require 'webpush/encryption'
+require 'webpush/request'
 
 module Webpush
 
@@ -14,11 +15,13 @@ module Webpush
   TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'
 
   class << self
-    def payload_send(message:, endpoint:, p256dh:, auth:, api_key: "")
+    def payload_send(message:, endpoint:, p256dh:, auth:, **options)
       endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
 
       payload = Webpush::Encryption.encrypt(message, p256dh, auth)
-      push_server_post(endpoint, payload, api_key)
+      # push_server_post(endpoint, payload, api_key)
+
+      Webpush::Request.new(endpoint, payload, options).perform
     end
 
     private
