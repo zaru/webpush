@@ -61,26 +61,6 @@ describe Webpush do
       expect(result).to be(false)
     end
 
-    it 'inserts Authorization header when present' do
-      api_key = SecureRandom.hex(16)
-      expected_headers.merge!('Authorization' => "key=#{api_key}")
-
-      stub_request(:post, expected_endpoint).
-        with(body: expected_body, headers: expected_headers).
-        to_return(status: 201, body: "", headers: {})
-
-      Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: api_key)
-    end
-
-    it 'does not insert Authorization header when blank' do
-      stub_request(:post, expected_endpoint).
-        with(body: expected_body, headers: expected_headers).
-        to_return(status: 201, body: "", headers: {})
-
-      Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: "")
-      Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: nil)
-    end
-
     it 'message and encryption keys are optional' do
       expect(Webpush::Encryption).to_not receive(:encrypt)
 

@@ -1,6 +1,6 @@
 module Webpush
   class Request
-    def initialize(endpoint, options)
+    def initialize(endpoint, options = {})
       @endpoint = endpoint
       @options = default_options.merge(options)
       @payload = @options.delete(:payload) || {}
@@ -18,8 +18,6 @@ module Webpush
     rescue
       false
     end
-
-    private
 
     def headers
       headers = {}
@@ -41,12 +39,14 @@ module Webpush
       @payload.fetch(:ciphertext, "")
     end
 
+    private
+
     def ttl
-      @options[:ttl].to_s
+      @options.fetch(:ttl).to_s
     end
 
     def api_key
-      @options[:api_key]
+      @options.fetch(:api_key, nil)
     end
 
     def api_key?
@@ -68,8 +68,7 @@ module Webpush
     def default_options
       {
         api_key: nil,
-        ttl: 60*60*24*7*4,        # 4 weeks
-        raise_exceptions: false
+        ttl: 60*60*24*7*4 # 4 weeks
       }
     end
   end
