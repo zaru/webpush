@@ -28,16 +28,57 @@ describe Webpush do
       }
     end
 
+    before do
+      allow(Webpush::Encryption).to receive(:encrypt).and_return(payload)
+    end
+
     it 'calls the relevant service with the correct headers' do
       expect(Webpush::Encryption).to receive(:encrypt).and_return(payload)
 
       stub_request(:post, expected_endpoint).
         with(body: expected_body, headers: expected_headers).
-        to_return(:status => 201, :body => "", :headers => {})
+        to_return(status: 201, body: "", headers: {})
 
       result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
 
       expect(result).to be(true)
+    end
+
+    it 'returns false for unsuccessful status code by default' do
+      stub_request(:post, expected_endpoint).
+        to_return(status: 401, body: "", headers: {})
+
+      result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
+
+      expect(result).to be(false)
+    end
+
+    it 'returns false on error by default' do
+      stub_request(:post, expected_endpoint).to_raise(StandardError)
+
+      result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
+
+      expect(result).to be(false)
+    end
+
+    it 'inserts Authorization header when present' do
+      api_key = SecureRandom.hex(16)
+      expected_headers.merge!('Authorization' => "key=#{api_key}")
+
+      stub_request(:post, expected_endpoint).
+        with(body: expected_body, headers: expected_headers).
+        to_return(status: 201, body: "", headers: {})
+
+      Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: api_key)
+    end
+
+    it 'does not insert Authorization header when blank' do
+      stub_request(:post, expected_endpoint).
+        with(body: expected_body, headers: expected_headers).
+        to_return(status: 201, body: "", headers: {})
+
+      Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: "")
+      Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth, api_key: nil)
     end
   end
 

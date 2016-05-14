@@ -3,6 +3,8 @@ module Webpush
     extend self
 
     def encrypt(message, p256dh, auth)
+      assert_arguments(message, p256dh, auth)
+
       group_name = "prime256v1"
       salt = Random.new.bytes(16)
 
@@ -18,15 +20,15 @@ module Webpush
 
       client_auth_token = Base64.urlsafe_decode64(auth)
 
-      prk = HKDF.new(shared_secret, :salt => client_auth_token, :algorithm => 'SHA256', :info => "Content-Encoding: auth\0").next_bytes(32)
+      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: "Content-Encoding: auth\0").next_bytes(32)
 
       context = create_context(client_public_key_bn, server_public_key_bn)
 
       content_encryption_key_info = create_info('aesgcm', context)
-      content_encryption_key = HKDF.new(prk, :salt => salt, :info => content_encryption_key_info).next_bytes(16)
+      content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).next_bytes(16)
 
       nonce_info = create_info('nonce', context)
-      nonce = HKDF.new(prk, :salt => salt, :info => nonce_info).next_bytes(12)
+      nonce = HKDF.new(prk, salt: salt, info: nonce_info).next_bytes(12)
 
       ciphertext = encrypt_payload(message, content_encryption_key, nonce)
 
@@ -40,9 +42,9 @@ module Webpush
 
     private
 
-    def create_context(clientPublicKey, serverPublicKey)
-      c = convert16bit(clientPublicKey)
-      s = convert16bit(serverPublicKey)
+    def create_context(client_public_key, server_public_key)
+      c = convert16bit(client_public_key)
+      s = convert16bit(server_public_key)
       context = "\0"
       context += [c.bytesize].pack("n*")
       context += c
@@ -76,6 +78,16 @@ module Webpush
 
     def convert16bit(key)
       [key.to_s(16)].pack("H*")
+    end
+
+    def assert_arguments(message, p256dh, auth)
+      raise ArgumentError, "message cannot be blank" if blank?(message)
+      raise ArgumentError, "p256dh cannot be blank" if blank?(p256dh)
+      raise ArgumentError, "auth cannot be blank" if blank?(auth)
+    end
+
+    def blank?(value)
+      value.nil? || value.empty?
     end
   end
 end

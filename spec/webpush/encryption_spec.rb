@@ -24,6 +24,21 @@ describe Webpush::Encryption do
       expect(decrypted_data).to eq("Hello World")
     end
 
+    it 'returns error when message is blank' do
+      expect{Webpush::Encryption.encrypt(nil, p256dh, auth)}.to raise_error(ArgumentError)
+      expect{Webpush::Encryption.encrypt("", p256dh, auth)}.to raise_error(ArgumentError)
+    end
+
+    it 'returns error when p256dh is blank' do
+      expect{Webpush::Encryption.encrypt("Hello world", nil, auth)}.to raise_error(ArgumentError)
+      expect{Webpush::Encryption.encrypt("Hello world", "", auth)}.to raise_error(ArgumentError)
+    end
+
+    it 'returns error when auth is blank' do
+      expect{Webpush::Encryption.encrypt("Hello world", p256dh, "")}.to raise_error(ArgumentError)
+      expect{Webpush::Encryption.encrypt("Hello world", p256dh, nil)}.to raise_error(ArgumentError)
+    end
+
     def generate_ecdh_key
       group = "prime256v1"
       curve = OpenSSL::PKey::EC.new(group)
