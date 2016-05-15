@@ -59,4 +59,24 @@ describe Webpush::Request do
       end
     end
   end
+
+  describe '#body' do
+    it 'extracts :ciphertext from the :payload argument' do
+      request = Webpush::Request.new('endpoint', payload: { ciphertext: 'encrypted' })
+
+      expect(request.body).to eq('encrypted')
+    end
+
+    it 'is empty string when no :ciphertext' do
+      request = Webpush::Request.new('endpoint', payload: {})
+
+      expect(request.body).to eq('')
+    end
+
+    it 'is empty string when no :payload' do
+      request = Webpush::Request.new('endpoint')
+
+      expect(request.body).to eq('')
+    end
+  end
 end
