@@ -6,6 +6,7 @@ require 'json'
 
 require 'webpush/version'
 require 'webpush/encryption'
+require 'webpush/request'
 
 module Webpush
 
@@ -14,34 +15,31 @@ module Webpush
   TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'
 
   class << self
-    def payload_send(message:, endpoint:, p256dh:, auth:, api_key: "")
+    # Deliver the payload to the required endpoint given by the JavaScript
+    # PushSubscription. Including an optional message requires p256dh and
+    # auth keys from the PushSubscription.
+    #
+    # @param endpoint [String] the required PushSubscription url
+    # @param message [String] the optional payload
+    # @param p256dh [String] the user's public ECDH key given by the PushSubscription
+    # @param auth [String] the user's private ECDH key given by the PushSubscription
+    # @param options [Hash<Symbol,String>] additional options for the notification
+    # @option options [String] :api_key required for Google, omit for Firefox
+    # @option options [#to_s] :ttl Time-to-live in seconds
+    def payload_send(endpoint:, message: "", p256dh: "", auth: "", **options)
       endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
 
-      payload = Webpush::Encryption.encrypt(message, p256dh, auth)
-      push_server_post(endpoint, payload, api_key)
+      payload = build_payload(message, p256dh, auth)
+
+      Webpush::Request.new(endpoint, options.merge(payload: payload)).perform
     end
 
     private
 
-    def push_server_post(endpoint, payload, api_key = "")
-      uri = URI.parse(endpoint)
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-      header = {
-          "Content-Type" => "application/octet-stream",
-          "Content-Encoding" => "aesgcm",
-          "Encryption" => "salt=#{Base64.urlsafe_encode64(payload[:salt]).delete('=')}",
-          "Crypto-Key" => "dh=#{Base64.urlsafe_encode64(payload[:server_public_key_bn]).delete('=')}",
-          "Ttl"        => "2419200"
-      }
-      header["Authorization"] = "key=#{api_key}" unless api_key.nil? || api_key.empty?
-      req = Net::HTTP::Post.new(uri.request_uri, header)
-      req.body = payload[:ciphertext]
-      res = http.request(req)
-      res.code == "201"
-    rescue
-      false
+    def build_payload(message, p256dh, auth)
+      return {} if message.nil? || message.empty?
+
+      Webpush::Encryption.encrypt(message, p256dh, auth)
     end
   end
 end
