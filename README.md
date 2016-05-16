@@ -25,6 +25,8 @@ Or install it yourself as:
 
 ## Usage
 
+### using the payload
+
 ```ruby
 message = {
   title: "title",
@@ -33,10 +35,19 @@ message = {
 }
 
 Webpush.payload_send(
-  message: JSON.generate(message),
   endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
+  message: JSON.generate(message),
   p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
   auth: "aW1hcmthcmFpa3V6ZQ==",
+  api_key: "[GoogleDeveloper APIKEY]" # optional, not used in Firefox.
+)
+```
+
+### not use the payload
+
+```ruby
+Webpush.payload_send(
+  endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
   api_key: "[GoogleDeveloper APIKEY]" # optional, not used in Firefox.
 )
 ```
