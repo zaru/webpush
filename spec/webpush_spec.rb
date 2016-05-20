@@ -32,6 +32,8 @@ describe Webpush do
       allow(Webpush::Encryption).to receive(:encrypt).and_return(payload)
     end
 
+    subject { Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth) }
+
     it 'calls the relevant service with the correct headers' do
       expect(Webpush::Encryption).to receive(:encrypt).and_return(payload)
 
@@ -39,26 +41,26 @@ describe Webpush do
         with(body: expected_body, headers: expected_headers).
         to_return(status: 201, body: "", headers: {})
 
-      result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
+      result = subject
 
-      expect(result).to be(true)
+      expect(result).to be_a(Net::HTTPCreated)
+      expect(result.code).to eql('201')
     end
 
-    it 'returns false for unsuccessful status code by default' do
+    it 'returns raw http error response for unsuccessful status code by default' do
       stub_request(:post, expected_endpoint).
         to_return(status: 401, body: "", headers: {})
 
-      result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
+      result = subject
 
-      expect(result).to be(false)
+      expect(result).to be_a(Net::HTTPUnauthorized)
+      expect(result.code).to eql('401')
     end
 
-    it 'returns false on error by default' do
+    it 'raises exception on error by default' do
       stub_request(:post, expected_endpoint).to_raise(StandardError)
 
-      result = Webpush.payload_send(message: message, endpoint: endpoint, p256dh: p256dh, auth: auth)
-
-      expect(result).to be(false)
+      expect { subject }.to raise_error
     end
 
     it 'message and encryption keys are optional' do

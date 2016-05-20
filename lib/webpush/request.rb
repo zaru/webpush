@@ -13,10 +13,9 @@ module Webpush
       http.verify_mode = OpenSSL::SSL::VERIFY_NONE
       req = Net::HTTP::Post.new(uri.request_uri, headers)
       req.body = body
-      res = http.request(req)
-      res.code == "201"
-    rescue
-      false
+      http.request(req)
+    rescue => e
+      raise e
     end
 
     def headers
