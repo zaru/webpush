@@ -2,6 +2,7 @@
 
 [![Code Climate](https://codeclimate.com/github/zaru/webpush/badges/gpa.svg)](https://codeclimate.com/github/zaru/webpush)
 [![Build Status](https://travis-ci.org/zaru/webpush.svg?branch=master)](https://travis-ci.org/zaru/webpush)
+[![Gem Version](https://badge.fury.io/rb/webpush.svg)](https://badge.fury.io/rb/webpush)
 
 This Gem will send the Web Push API. It supports the encryption necessary to payload.
 
