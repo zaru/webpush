@@ -1,4 +1,14 @@
 module Webpush
+  @@cert_store = nil
+  
+  def self.cert_store= cs
+    @@cert_store = cs
+  end
+
+  def self.cert_store
+    @@cert_store
+  end
+  
   class Request
     def initialize(endpoint, options = {})
       @endpoint = endpoint
@@ -10,7 +20,12 @@ module Webpush
       uri = URI.parse(@endpoint)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      if Webpush.cert_store
+        http.cert_store = Webpush.cert_store
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      else
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      end
       req = Net::HTTP::Post.new(uri.request_uri, headers)
       req.body = body
       http.request(req)
