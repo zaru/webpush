@@ -10,7 +10,12 @@ module Webpush
       uri = URI.parse(@endpoint)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      if @options[:cert_store]
+        http.cert_store = @options[:cert_store]
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      else
+        http.verify_mode = OpenSSL::SSL::VERIFY_NONE
+      end
       req = Net::HTTP::Post.new(uri.request_uri, headers)
       req.body = body
       http.request(req)
