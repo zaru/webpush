@@ -43,18 +43,28 @@ describe Webpush do
 
       result = subject
 
-      expect(result).to be_a(Net::HTTPCreated)
-      expect(result.code).to eql('201')
+      expect(result).to be_nil
     end
 
-    it 'returns raw http error response for unsuccessful status code by default' do
+    it 'raises InvalidSubscription if and only if the combination of status code and message indicate an invalid subscription' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 410, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::InvalidSubscription)
+
+      stub_request(:post, expected_endpoint).
+          to_return(status: [400, "UnauthorizedRegistration"], body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::InvalidSubscription)
+
+      stub_request(:post, expected_endpoint).
+          to_return(status: 400, body: "", headers: {})
+      expect { subject }.not_to raise_error(Webpush::InvalidSubscription)
+    end
+
+    it 'raises ResponseError for unsuccessful status code by default' do
       stub_request(:post, expected_endpoint).
         to_return(status: 401, body: "", headers: {})
 
-      result = subject
-
-      expect(result).to be_a(Net::HTTPUnauthorized)
-      expect(result.code).to eql('401')
+      expect { subject }.to raise_error(Webpush::ResponseError)
     end
 
     it 'raises exception on error by default' do
