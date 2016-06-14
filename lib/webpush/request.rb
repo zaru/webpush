@@ -28,6 +28,8 @@ module Webpush
       elsif !resp.is_a?(Net::HTTPSuccess)  #unknown/unhandled response error
         raise ResponseError.new "host: #{uri.host}, #{resp.inspect}\nbody:\n#{resp.body}"
       end
+
+      resp
     end
 
     def headers

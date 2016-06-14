@@ -43,7 +43,8 @@ describe Webpush do
 
       result = subject
 
-      expect(result).to be_nil
+      expect(result).to be_a(Net::HTTPCreated)
+      expect(result.code).to eql('201')
     end
 
     it 'raises InvalidSubscription if and only if the combination of status code and message indicate an invalid subscription' do
