@@ -1,4 +1,11 @@
 module Webpush
+
+  class ResponseError < RuntimeError
+  end
+
+  class InvalidSubscription < ResponseError
+  end
+
   class Request
     def initialize(endpoint, options = {})
       @endpoint = endpoint
@@ -18,9 +25,16 @@ module Webpush
       end
       req = Net::HTTP::Post.new(uri.request_uri, headers)
       req.body = body
-      http.request(req)
-    rescue => e
-      raise e
+      resp = http.request(req)
+
+      if resp.is_a?(Net::HTTPGone) ||   #Firefox unsubscribed response
+          (resp.is_a?(Net::HTTPBadRequest) && resp.message == "UnauthorizedRegistration")  #Chrome unsubscribed response
+        raise InvalidSubscription.new(resp.inspect)
+      elsif !resp.is_a?(Net::HTTPSuccess)  #unknown/unhandled response error
+        raise ResponseError.new "host: #{uri.host}, #{resp.inspect}\nbody:\n#{resp.body}"
+      end
+
+      resp
     end
 
     def headers
