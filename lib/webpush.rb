@@ -26,7 +26,7 @@ module Webpush
     # @param options [Hash<Symbol,String>] additional options for the notification
     # @option options [String] :api_key required for Google, omit for Firefox
     # @option options [#to_s] :ttl Time-to-live in seconds
-    def payload_send(endpoint:, message: "", p256dh: "", auth: "", **options)
+    def payload_send(endpoint: "", message: "", p256dh: "", auth: "", **options)
       endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
 
       payload = build_payload(message, p256dh, auth)
