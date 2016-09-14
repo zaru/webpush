@@ -62,7 +62,7 @@ module Webpush
     end
 
     def api_key?
-      !(api_key.nil? || api_key.empty?) && @endpoint =~ /\Ahttps:\/\/.+\.googleapis\.com/
+      !(api_key.nil? || api_key.empty?) && @endpoint =~ /\Ahttps:\/\/(android|gcm-http)\.googleapis\.com/
     end
 
     def encrypted_payload?
