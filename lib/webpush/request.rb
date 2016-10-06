@@ -42,8 +42,6 @@ module Webpush
         headers["Crypto-Key"] = "dh=#{dh_param}"
       end
 
-      headers["Authorization"] = "key=#{api_key}" if api_key?
-
       headers
     end
 
@@ -55,14 +53,6 @@ module Webpush
 
     def ttl
       @options.fetch(:ttl).to_s
-    end
-
-    def api_key
-      @options.fetch(:api_key, nil)
-    end
-
-    def api_key?
-      !(api_key.nil? || api_key.empty?) && @endpoint =~ /\Ahttps:\/\/(android|gcm-http)\.googleapis\.com/
     end
 
     def encrypted_payload?
@@ -79,7 +69,6 @@ module Webpush
 
     def default_options
       {
-        api_key: nil,
         ttl: 60*60*24*7*4 # 4 weeks
       }
     end

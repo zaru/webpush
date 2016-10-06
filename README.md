@@ -40,8 +40,7 @@ Webpush.payload_send(
   message: JSON.generate(message),
   p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
   auth: "aW1hcmthcmFpa3V6ZQ==",
-  ttl: 600, #optional, ttl in seconds, defaults to 2419200 (4 weeks)
-  api_key: "[GoogleDeveloper APIKEY]" # optional, not used in Firefox.
+  ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks)
 )
 ```
 
@@ -50,8 +49,7 @@ Webpush.payload_send(
 ```ruby
 Webpush.payload_send(
   endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
-  ttl: 600, #optional, ttl in seconds, defaults to 2419200 (4 weeks)
-  api_key: "[GoogleDeveloper APIKEY]" # optional, not used in Firefox.
+  ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks)
 )
 ```
 

@@ -24,7 +24,6 @@ module Webpush
     # @param p256dh [String] the user's public ECDH key given by the PushSubscription
     # @param auth [String] the user's private ECDH key given by the PushSubscription
     # @param options [Hash<Symbol,String>] additional options for the notification
-    # @option options [String] :api_key required for Google, omit for Firefox
     # @option options [#to_s] :ttl Time-to-live in seconds
     def payload_send(endpoint:, message: "", p256dh: "", auth: "", **options)
       endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)

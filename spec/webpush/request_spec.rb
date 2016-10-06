@@ -23,40 +23,6 @@ describe Webpush::Request do
       end
     end
 
-    describe 'from :api_key' do
-      it 'inserts Authorization header when api_key present, and endpoint is for Chrome\'s non-standards-compliant GCM endpoints' do
-        request = Webpush::Request.new('https://gcm-http.googleapis.com/gcm/xyz', api_key: "api_key")
-
-        expect(request.headers['Authorization']).to eq("key=api_key")
-      end
-
-      it 'does not insert Authorization header for Chrome\'s new standards-compliant endpoints, even if api_key is present' do
-        request = Webpush::Request.new('https://fcm.googleapis.com/fcm/send/ABCD1234', api_key: "api_key")
-
-        expect(request.headers['Authorization']).to be_nil
-      end
-
-      it 'does not insert Authorization header when endpoint is not for Chrome, even if api_key is present' do
-        request = Webpush::Request.new('https://some.random.endpoint.com/xyz', api_key: "api_key")
-
-        expect(request.headers['Authorization']).to be_nil
-      end
-
-      it 'does not insert Authorization header when api_key blank' do
-        request = Webpush::Request.new("endpoint", api_key: nil)
-
-        expect(request.headers['Authorization']).to be_nil
-
-        request = Webpush::Request.new("endpoint", api_key: "")
-
-        expect(request.headers['Authorization']).to be_nil
-
-        request = Webpush::Request.new("endpoint")
-
-        expect(request.headers['Authorization']).to be_nil
-      end
-    end
-
     describe 'from :ttl' do
       it 'can override Ttl with :ttl option with string' do
         request = Webpush::Request.new("endpoint", ttl: '300')
