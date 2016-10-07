@@ -12,12 +12,12 @@ module Webpush
   class Request
     include Urlsafe
 
-    def initialize(endpoint, options = {})
+    def initialize(endpoint, vapid:, **options)
       @endpoint = endpoint
+      @vapid = vapid
+
       @options = default_options.merge(options)
       @payload = @options.delete(:payload) || {}
-
-      @vapid = @options[:vapid] if @options.has_key?(:vapid)
     end
 
     def perform
@@ -49,14 +49,12 @@ module Webpush
         headers["Crypto-Key"] = "keyid=p256dh;dh=#{dh_param}"
       end
 
-      if @vapid
-        vapid_headers = build_vapid_headers
-        headers["Authorization"] = vapid_headers["Authorization"]
-        headers["Crypto-Key"] = [
-          headers["Crypto-Key"],
-          vapid_headers["Crypto-Key"]
-        ].compact.join(";")
-      end
+      vapid_headers = build_vapid_headers
+      headers["Authorization"] = vapid_headers["Authorization"]
+      headers["Crypto-Key"] = [
+        headers["Crypto-Key"],
+        vapid_headers["Crypto-Key"]
+      ].compact.join(";")
 
       headers
     end
