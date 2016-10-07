@@ -47,12 +47,15 @@ module Webpush
         headers["Content-Encoding"] = "aesgcm"
         headers["Encryption"] = "keyid=p256dh;salt=#{salt_param}"
         headers["Crypto-Key"] = "keyid=p256dh;dh=#{dh_param}"
+      end
 
-        if @vapid
-          vapid_headers = build_vapid_headers
-          headers["Authorization"] = vapid_headers["Authorization"]
-          headers["Crypto-Key"] += ";" + vapid_headers["Crypto-Key"]
-        end
+      if @vapid
+        vapid_headers = build_vapid_headers
+        headers["Authorization"] = vapid_headers["Authorization"]
+        headers["Crypto-Key"] = [
+          headers["Crypto-Key"],
+          vapid_headers["Crypto-Key"]
+        ].compact.join(";")
       end
 
       headers

@@ -97,20 +97,6 @@ describe Webpush do
 
       expect { subject }.to raise_error
     end
-
-    it 'message and encryption keys are optional' do
-      expect(Webpush::Encryption).to_not receive(:encrypt)
-
-      expected_headers.delete('Crypto-Key')
-      expected_headers.delete('Content-Encoding')
-      expected_headers.delete('Encryption')
-
-      stub_request(:post, expected_endpoint).
-        with(body: "", headers: expected_headers).
-        to_return(status: 201, body: "", headers: {})
-
-      Webpush.payload_send(endpoint: endpoint)
-    end
   end
 
   context 'chrome endpoint' do
