@@ -11,15 +11,14 @@ describe Webpush::Request do
       it 'inserts encryption headers for valid payload' do
         payload = {
           ciphertext: "ciphertext",
-          server_public_key_bn:
-          "server_public_key_bn",
+          server_public_key: "server_public_key",
           salt: "salt"
         }
         request = Webpush::Request.new("endpoint", payload: payload)
 
         expect(request.headers['Content-Encoding']).to eq("aesgcm")
-        expect(request.headers['Encryption']).to eq("salt=c2FsdA")
-        expect(request.headers['Crypto-Key']).to eq("dh=c2VydmVyX3B1YmxpY19rZXlfYm4")
+        expect(request.headers['Encryption']).to eq("keyid=p256dh;salt=c2FsdA")
+        expect(request.headers['Crypto-Key']).to eq("keyid=p256dh;dh=c2VydmVyX3B1YmxpY19rZXk")
       end
     end
 

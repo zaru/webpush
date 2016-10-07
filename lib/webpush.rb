@@ -5,14 +5,12 @@ require 'net/http'
 require 'json'
 
 require 'webpush/version'
+require 'webpush/urlsafe'
+require 'webpush/vapid'
 require 'webpush/encryption'
 require 'webpush/request'
 
 module Webpush
-
-  # It is temporary URL until supported by the GCM server.
-  GCM_URL = 'https://android.googleapis.com/gcm/send'
-  TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'
 
   class << self
     # Deliver the payload to the required endpoint given by the JavaScript
@@ -26,11 +24,17 @@ module Webpush
     # @param options [Hash<Symbol,String>] additional options for the notification
     # @option options [#to_s] :ttl Time-to-live in seconds
     def payload_send(endpoint:, message: "", p256dh: "", auth: "", **options)
-      endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
-
       payload = build_payload(message, p256dh, auth)
 
       Webpush::Request.new(endpoint, options.merge(payload: payload)).perform
+    end
+
+    # public_key: vapid_key.public_key.to_bn.to_s(2)
+    # private_key: vapid_key.private_key.to_s(2)
+    def generate_key
+      key = OpenSSL::PKey::EC.new('prime256v1')
+      key.generate_key
+      key
     end
 
     private

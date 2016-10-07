@@ -1,3 +1,6 @@
+require 'jwt'
+require 'base64'
+
 module Webpush
 
   class ResponseError < RuntimeError
@@ -7,10 +10,14 @@ module Webpush
   end
 
   class Request
+    include Urlsafe
+
     def initialize(endpoint, options = {})
       @endpoint = endpoint
       @options = default_options.merge(options)
       @payload = @options.delete(:payload) || {}
+
+      @vapid = @options[:vapid] if @options.has_key?(:vapid)
     end
 
     def perform
@@ -36,13 +43,23 @@ module Webpush
       headers["Content-Type"] = "application/octet-stream"
       headers["Ttl"]          = ttl
 
-      if encrypted_payload?
+      if @payload.has_key?(:server_public_key)
         headers["Content-Encoding"] = "aesgcm"
-        headers["Encryption"] = "salt=#{salt_param}"
-        headers["Crypto-Key"] = "dh=#{dh_param}"
+        headers["Encryption"] = "keyid=p256dh;salt=#{salt_param}"
+        headers["Crypto-Key"] = "keyid=p256dh;dh=#{dh_param}"
+
+        if @vapid
+          vapid_headers = build_vapid_headers
+          headers["Authorization"] = vapid_headers["Authorization"]
+          headers["Crypto-Key"] += ";" + vapid_headers["Crypto-Key"]
+        end
       end
 
       headers
+    end
+
+    def build_vapid_headers
+      Vapid.headers(@vapid)
     end
 
     def body
@@ -55,12 +72,8 @@ module Webpush
       @options.fetch(:ttl).to_s
     end
 
-    def encrypted_payload?
-      [:ciphertext, :server_public_key_bn, :salt].all? { |key| @payload.has_key?(key) }
-    end
-
     def dh_param
-      Base64.urlsafe_encode64(@payload.fetch(:server_public_key_bn)).delete('=')
+      Base64.urlsafe_encode64(@payload.fetch(:server_public_key)).delete('=')
     end
 
     def salt_param

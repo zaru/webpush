@@ -36,6 +36,7 @@ module Webpush
         ciphertext: ciphertext,
         salt: salt,
         server_public_key_bn: convert16bit(server_public_key_bn),
+        server_public_key: server_public_key_bn.to_s(2),
         shared_secret: shared_secret
       }
     end

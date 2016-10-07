@@ -36,7 +36,7 @@ message = {
 }
 
 Webpush.payload_send(
-  endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
+  endpoint: "https://fcm.googleapis.com/gcm/send/eah7hak....",
   message: JSON.generate(message),
   p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
   auth: "aW1hcmthcmFpa3V6ZQ==",
@@ -48,7 +48,7 @@ Webpush.payload_send(
 
 ```ruby
 Webpush.payload_send(
-  endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
+  endpoint: "https://fcm.googleapis.com/gcm/send/eah7hak....",
   ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks)
 )
 ```
