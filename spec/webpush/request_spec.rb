@@ -7,14 +7,10 @@ describe Webpush::Request do
     it { expect(request.headers['Content-Type']).to eq('application/octet-stream') }
     it { expect(request.headers['Ttl']).to eq('2419200') }
 
-    describe 'from :payload' do
+    describe 'from :message' do
       it 'inserts encryption headers for valid payload' do
-        payload = {
-          ciphertext: "ciphertext",
-          server_public_key: "server_public_key",
-          salt: "salt"
-        }
-        request = build_request("endpoint", payload: payload)
+        allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted', server_public_key: 'server_public_key', salt: 'salt')
+        request = build_request("endpoint", message: "Hello")
 
         expect(request.headers['Content-Encoding']).to eq("aesgcm")
         expect(request.headers['Encryption']).to eq("keyid=p256dh;salt=c2FsdA")
@@ -39,7 +35,9 @@ describe Webpush::Request do
 
   describe '#body' do
     it 'extracts :ciphertext from the :payload argument' do
-      request = build_request('endpoint', payload: { ciphertext: 'encrypted' }, vapid: vapid_options)
+      allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted')
+
+      request = build_request('endpoint', message: 'Hello', vapid: vapid_options)
 
       expect(request.body).to eq('encrypted')
     end
@@ -58,6 +56,13 @@ describe Webpush::Request do
   end
 
   def build_request(endpoint, options = {})
-    Webpush::Request.new(endpoint, {vapid: vapid_options}.merge(options))
+    subscription = {
+      endpoint: endpoint,
+      keys: {
+        p256dh: 'p256dh',
+        auth: 'auth'
+      }
+    }
+    Webpush::Request.new(message: "", subscription: subscription, vapid: vapid_options, **options)
   end
 end

@@ -12,12 +12,13 @@ module Webpush
   class Request
     include Urlsafe
 
-    def initialize(endpoint, vapid:, **options)
-      @endpoint = endpoint
+    def initialize(message: "", subscription:, vapid:, **options)
+      @endpoint = subscription.fetch(:endpoint)
       @vapid = vapid
 
+      @payload = build_payload(message, subscription)
+
       @options = default_options.merge(options)
-      @payload = @options.delete(:payload) || {}
     end
 
     def perform
@@ -85,6 +86,16 @@ module Webpush
       {
         ttl: 60*60*24*7*4 # 4 weeks
       }
+    end
+
+    def build_payload(message, subscription)
+      return {} if message.nil? || message.empty?
+
+      encrypt_payload(message, subscription.fetch(:keys))
+    end
+
+    def encrypt_payload(message, p256dh:, auth:)
+      Webpush::Encryption.encrypt(message, p256dh, auth)
     end
   end
 end

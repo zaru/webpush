@@ -16,12 +16,6 @@ module Webpush
 
     def headers
       vapid_key = generate_vapid_key
-      jwt_payload = {
-        aud: @audience,
-        exp: Time.now.to_i + @expiration,
-        sub: @subject,
-      }
-
       jwt = JWT.encode(jwt_payload, vapid_key, 'ES256')
       p256ecdsa = urlsafe_encode64(vapid_key.public_key.to_bn.to_s(2))
 
@@ -32,6 +26,14 @@ module Webpush
     end
 
     private
+
+    def jwt_payload
+      {
+        aud: @audience,
+        exp: Time.now.to_i + @expiration,
+        sub: @subject,
+      }
+    end
 
     def generate_vapid_key
       public_key_bn = OpenSSL::BN.new(urlsafe_decode64(@public_key), 2)
