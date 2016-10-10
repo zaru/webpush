@@ -22,7 +22,7 @@ module Webpush
     # @param auth [String] the user's private ECDH key given by the PushSubscription
     # @param options [Hash<Symbol,String>] additional options for the notification
     # @option options [#to_s] :ttl Time-to-live in seconds
-    def payload_send(message: "", endpoint:, p256dh: "", auth: "", vapid:, **options)
+    def payload_send(message: "", endpoint:, p256dh: "", auth: "", vapid: {}, **options)
       subscription = {
         endpoint: endpoint,
         keys: {

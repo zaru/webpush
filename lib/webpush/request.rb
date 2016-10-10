@@ -10,11 +10,16 @@ module Webpush
   class InvalidSubscription < ResponseError
   end
 
+  # It is temporary URL until supported by the GCM server.
+  GCM_URL = 'https://android.googleapis.com/gcm/send'
+  TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'
+
   class Request
     include Urlsafe
 
     def initialize(message: "", subscription:, vapid:, **options)
-      @endpoint = subscription.fetch(:endpoint)
+      endpoint = subscription.fetch(:endpoint)
+      @endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
       @vapid = vapid
 
       @payload = build_payload(message, subscription)
@@ -50,12 +55,13 @@ module Webpush
         headers["Crypto-Key"] = "dh=#{dh_param}"
       end
 
-      vapid_headers = build_vapid_headers
-      headers["Authorization"] = vapid_headers["Authorization"]
-      headers["Crypto-Key"] = [
-        headers["Crypto-Key"],
-        vapid_headers["Crypto-Key"]
-      ].compact.join(";")
+      if api_key?
+        headers["Authorization"] = api_key
+      else
+        vapid_headers = build_vapid_headers
+        headers["Authorization"] = vapid_headers["Authorization"]
+        headers["Crypto-Key"] = [ headers["Crypto-Key"], vapid_headers["Crypto-Key"] ].compact.join(";")
+      end
 
       headers
     end
@@ -101,6 +107,14 @@ module Webpush
 
     def encrypt_payload(message, p256dh:, auth:)
       Webpush::Encryption.encrypt(message, p256dh, auth)
+    end
+
+    def api_key
+      @options.fetch(:api_key, nil)
+    end
+
+    def api_key?
+      !(api_key.nil? || api_key.empty?) && @endpoint =~ /\Ahttps:\/\/(android|gcm-http)\.googleapis\.com/
     end
   end
 end
