@@ -45,9 +45,9 @@ module Webpush
       headers["Ttl"]          = ttl
 
       if @payload.has_key?(:server_public_key)
-        headers["Content-Encoding"] = "aesgcm"
-        headers["Encryption"] = "keyid=p256dh;salt=#{salt_param}"
-        headers["Crypto-Key"] = "keyid=p256dh;dh=#{dh_param}"
+        headers["Content-Encoding"] = "aesgcm128"
+        headers["Encryption"] = "salt=#{salt_param}"
+        headers["Crypto-Key"] = "dh=#{dh_param}"
       end
 
       vapid_headers = build_vapid_headers
