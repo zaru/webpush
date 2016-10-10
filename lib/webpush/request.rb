@@ -2,6 +2,7 @@ require 'jwt'
 require 'base64'
 
 module Webpush
+  include Urlsafe
 
   class ResponseError < RuntimeError
   end
@@ -75,11 +76,11 @@ module Webpush
     end
 
     def dh_param
-      Base64.urlsafe_encode64(@payload.fetch(:server_public_key)).delete('=')
+      urlsafe_encode64(@payload.fetch(:server_public_key))
     end
 
     def salt_param
-      Base64.urlsafe_encode64(@payload.fetch(:salt)).delete('=')
+      urlsafe_encode64(@payload.fetch(:salt))
     end
 
     def default_options
