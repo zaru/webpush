@@ -23,7 +23,6 @@ module Webpush
     end
 
     def perform
-      uri = URI.parse(@endpoint)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       req = Net::HTTP::Post.new(uri.request_uri, headers)
@@ -62,7 +61,8 @@ module Webpush
     end
 
     def build_vapid_headers
-      Vapid.headers(@vapid)
+      audience = uri.scheme + "://" + uri.host
+      Vapid.headers(@vapid.merge(audience: audience))
     end
 
     def body
@@ -70,6 +70,10 @@ module Webpush
     end
 
     private
+
+    def uri
+      @uri ||= URI.parse(@endpoint)
+    end
 
     def ttl
       @options.fetch(:ttl).to_s
