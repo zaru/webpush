@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/zaru/webpush.svg?branch=master)](https://travis-ci.org/zaru/webpush)
 [![Gem Version](https://badge.fury.io/rb/webpush.svg)](https://badge.fury.io/rb/webpush)
 
-This Gem will send the Web Push API. It supports the encryption necessary to payload.
+This gem makes it possible to send push messages to web browsers from Ruby backends using the [Web Push Protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-10). It supports the encryption necessary to send messages securely.
 
 Payload is supported by Chrome50+, Firefox48+.
 
@@ -25,6 +25,16 @@ Or install it yourself as:
     $ gem install webpush
 
 ## Usage
+
+Sending a web push message to a visitor of your website requires a number of steps:
+
+1. Your server has generated (one-time) a set of Voluntary Application server Identification (VAPID) keys.
+2. To send messages through Chrome, you have registered your site through the Google Developer Console and have obtained a GCM sender id. For using Google's deprecated GCM protocol instead of VAPID, a separate GCM API key from your app settings would also be necessary.
+3. In the user's web browser, the user has accepted the prompt to receive notifications from your site.
+4. A 'manifest.json' file, linked from your user's page, identifies your app settings, including the GCM sender ID.
+5. Also in the user's web browser, a `serviceWorker` is installed and activated and its `pushManager` property is subscribed to push
+   events with your VAPID public key, with creates a `subscription` JSON object on the client side.
+6. Your server uses `webpush` to send a notification with the `subscription` from the client and an optional payload.
 
 ### using the payload
 
