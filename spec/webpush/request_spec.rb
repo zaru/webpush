@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Webpush::Request do
   describe '#headers' do
-    let(:request) { build_request("endpoint", vapid: vapid_options) }
+    let(:request) { build_request(vapid: vapid_options) }
 
     it { expect(request.headers['Content-Type']).to eq('application/octet-stream') }
     it { expect(request.headers['Ttl']).to eq('2419200') }
@@ -10,23 +10,23 @@ describe Webpush::Request do
     describe 'from :message' do
       it 'inserts encryption headers for valid payload' do
         allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted', server_public_key: 'server_public_key', salt: 'salt')
-        request = build_request("endpoint", message: "Hello")
+        request = build_request(message: "Hello")
 
-        expect(request.headers['Content-Encoding']).to eq("aesgcm")
-        expect(request.headers['Encryption']).to eq("keyid=p256dh;salt=c2FsdA")
-        expect(request.headers['Crypto-Key']).to eq("keyid=p256dh;dh=c2VydmVyX3B1YmxpY19rZXk;p256ecdsa="+vapid_options[:public_key].delete('='))
+        expect(request.headers['Content-Encoding']).to eq("aesgcm128")
+        expect(request.headers['Encryption']).to eq("salt=c2FsdA")
+        expect(request.headers['Crypto-Key']).to eq("dh=c2VydmVyX3B1YmxpY19rZXk;p256ecdsa="+vapid_options[:public_key].delete('='))
       end
     end
 
     describe 'from :ttl' do
       it 'can override Ttl with :ttl option with string' do
-        request = build_request("endpoint", ttl: '300', vapid: vapid_options)
+        request = build_request(ttl: '300', vapid: vapid_options)
 
         expect(request.headers['Ttl']).to eq('300')
       end
 
       it 'can override Ttl with :ttl option with fixnum' do
-        request = build_request("endpoint", ttl: 60 * 5)
+        request = build_request(ttl: 60 * 5)
 
         expect(request.headers['Ttl']).to eq('300')
       end
@@ -37,25 +37,25 @@ describe Webpush::Request do
     it 'extracts :ciphertext from the :payload argument' do
       allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted')
 
-      request = build_request('endpoint', message: 'Hello', vapid: vapid_options)
+      request = build_request(message: 'Hello', vapid: vapid_options)
 
       expect(request.body).to eq('encrypted')
     end
 
     it 'is empty string when no :ciphertext' do
-      request = build_request('endpoint', payload: {})
+      request = build_request(payload: {})
 
       expect(request.body).to eq('')
     end
 
     it 'is empty string when no :payload' do
-      request = build_request('endpoint')
+      request = build_request
 
       expect(request.body).to eq('')
     end
   end
 
-  def build_request(endpoint, options = {})
+  def build_request(options = {})
     subscription = {
       endpoint: endpoint,
       keys: {
@@ -64,5 +64,9 @@ describe Webpush::Request do
       }
     }
     Webpush::Request.new(message: "", subscription: subscription, vapid: vapid_options, **options)
+  end
+
+  def endpoint
+    'https://fcm.googleapis.com/gcm/send/subscription-id'
   end
 end

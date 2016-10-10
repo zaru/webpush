@@ -18,7 +18,6 @@ describe Webpush do
     let(:vapid) {{
       public_key: "BB9KQDaypj3mJCyrFbF5EDm-UrfnIGeomy0kYL56Mddi3LG6AFEMB_DnWUXSAmNFNOaIgTlXrT3dk2krmp9SPyg=",
       private_key: "JYQ5wbkNfJ2b1Kv_t58cUJJENBIIboVv5Ijzk6a5yH8=",
-      audience: "http://example.com",
       subject: "mailto:example@example.com",
       expiration: 60 * 60
     }}
@@ -26,10 +25,10 @@ describe Webpush do
       {
         'Accept'=>'*/*',
         'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'Content-Encoding'=>'aesgcm',
+        'Content-Encoding'=>'aesgcm128',
         'Content-Type'=>'application/octet-stream',
-        'Crypto-Key'=>'keyid=p256dh;dh=BAgtUks5d90kFmxGevk9tH7GEmvz9DB0qcEMUsOBgKwMf-TMjsKIIG6LQvGcFAf6jcmAod15VVwmYwGIIxE4VWE',
-        'Encryption'=>'keyid=p256dh;salt=WJeVM-RY-F9351SVxTFx_g',
+        'Crypto-Key'=>'dh=BAgtUks5d90kFmxGevk9tH7GEmvz9DB0qcEMUsOBgKwMf-TMjsKIIG6LQvGcFAf6jcmAod15VVwmYwGIIxE4VWE',
+        'Encryption'=>'salt=WJeVM-RY-F9351SVxTFx_g',
         'Ttl'=>'2419200',
         'User-Agent'=>'Ruby'
       }
