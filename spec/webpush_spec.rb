@@ -25,7 +25,7 @@ describe Webpush do
       {
         'Accept'=>'*/*',
         'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'Content-Encoding'=>'aesgcm128',
+        'Content-Encoding'=>'aesgcm',
         'Content-Type'=>'application/octet-stream',
         'Crypto-Key'=>'dh=BAgtUks5d90kFmxGevk9tH7GEmvz9DB0qcEMUsOBgKwMf-TMjsKIIG6LQvGcFAf6jcmAod15VVwmYwGIIxE4VWE',
         'Encryption'=>'salt=WJeVM-RY-F9351SVxTFx_g',
@@ -129,7 +129,7 @@ describe Webpush do
       {
         'Accept'=>'*/*',
         'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'Content-Encoding'=>'aesgcm128',
+        'Content-Encoding'=>'aesgcm',
         'Content-Type'=>'application/octet-stream',
         'Crypto-Key'=>'dh=BAgtUks5d90kFmxGevk9tH7GEmvz9DB0qcEMUsOBgKwMf-TMjsKIIG6LQvGcFAf6jcmAod15VVwmYwGIIxE4VWE',
         'Encryption'=>'salt=WJeVM-RY-F9351SVxTFx_g',

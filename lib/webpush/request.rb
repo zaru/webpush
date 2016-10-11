@@ -50,7 +50,7 @@ module Webpush
       headers["Ttl"]          = ttl
 
       if @payload.has_key?(:server_public_key)
-        headers["Content-Encoding"] = "aesgcm128"
+        headers["Content-Encoding"] = "aesgcm"
         headers["Encryption"] = "salt=#{salt_param}"
         headers["Crypto-Key"] = "dh=#{dh_param}"
       end

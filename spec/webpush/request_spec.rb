@@ -12,7 +12,7 @@ describe Webpush::Request do
         allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted', server_public_key: 'server_public_key', salt: 'salt')
         request = build_request(message: "Hello")
 
-        expect(request.headers['Content-Encoding']).to eq("aesgcm128")
+        expect(request.headers['Content-Encoding']).to eq("aesgcm")
         expect(request.headers['Encryption']).to eq("salt=c2FsdA")
         expect(request.headers['Crypto-Key']).to eq("dh=c2VydmVyX3B1YmxpY19rZXk;p256ecdsa="+vapid_options[:public_key].delete('='))
       end
