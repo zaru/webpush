@@ -33,6 +33,34 @@ describe Webpush::Request do
     end
   end
 
+  describe '#build_vapid_headers' do
+    it 'returns hash of VAPID headers' do
+      time = Time.at(1476150897)
+      jwt_payload = {
+        aud: 'https://fcm.googleapis.com',
+        exp: time.to_i + 24 * 60 * 60,
+        sub: 'mailto:sender@example.com',
+      }
+
+      vapid_key = Webpush::VapidKey.from_keys(vapid_public_key, vapid_private_key)
+      expect(Time).to receive(:now).and_return(time)
+      expect(Webpush::VapidKey).to receive(:from_keys).with(vapid_public_key, vapid_private_key).and_return(vapid_key)
+      expect(JWT).to receive(:encode).with(jwt_payload, vapid_key.curve, 'ES256').and_return('jwt.encoded.payload')
+
+      request = build_request(vapid: vapid_options)
+      headers = request.build_vapid_headers
+      # headers = Webpush::Request.headers({
+      #   audience: 'https://fcm.googleapis.com',
+      #   subject: 'mailto:sender@example.com',
+      #   public_key: vapid_public_key,
+      #   private_key: vapid_private_key
+      # })
+
+      expect(headers['Authorization']).to eq('WebPush jwt.encoded.payload')
+      expect(headers['Crypto-Key']).to eq('p256ecdsa=' + vapid_public_key.delete('='))
+    end
+  end
+
   describe '#body' do
     it 'extracts :ciphertext from the :payload argument' do
       allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted')

@@ -5,8 +5,8 @@ require 'net/http'
 require 'json'
 
 require 'webpush/version'
-require 'webpush/urlsafe'
-require 'webpush/vapid'
+require 'webpush/errors'
+require 'webpush/vapid_key'
 require 'webpush/encryption'
 require 'webpush/request'
 
@@ -20,6 +20,10 @@ module Webpush
     # @param message [String] the optional payload
     # @param p256dh [String] the user's public ECDH key given by the PushSubscription
     # @param auth [String] the user's private ECDH key given by the PushSubscription
+    # @param vapid [Hash<Symbol,String>] options for VAPID
+    # @option vapid [String] :subject contact URI for the app server as a "mailto:" or an "https:"
+    # @option vapid [String] :public_key the VAPID public key
+    # @option vapid [String] :private_key the VAPID private key
     # @param options [Hash<Symbol,String>] additional options for the notification
     # @option options [#to_s] :ttl Time-to-live in seconds
     def payload_send(message: "", endpoint:, p256dh: "", auth: "", vapid: {}, **options)
@@ -41,9 +45,7 @@ module Webpush
     # public_key: vapid_key.public_key.to_bn.to_s(2)
     # private_key: vapid_key.private_key.to_s(2)
     def generate_key
-      key = OpenSSL::PKey::EC.new('prime256v1')
-      key.generate_key
-      key
+      VapidKey.new
     end
   end
 end

@@ -15,12 +15,6 @@ describe Webpush do
     let(:shared_secret) { "\t\xA7&\x85\t\xC5m\b\xA8\xA7\xF8B{1\xADk\xE1y'm\xEDE\xEC\xDD\xEDj\xB3$s\xA9\xDA\xF0" }
     let(:payload) { { ciphertext: ciphertext, salt: salt, server_public_key: server_public_key, shared_secret: shared_secret } }
     let(:expected_body) { "+\xB8\xDBT}\u0013\xB6\xDD.\xF9\xB0\xA7\xC8Ҁ\xFD\x99#\xF7\xAC\x83\xA4\xDB,\u001F\xB5\xB9w\x85>\xF7\xADr" }
-    let(:vapid) {{
-      public_key: "BB9KQDaypj3mJCyrFbF5EDm-UrfnIGeomy0kYL56Mddi3LG6AFEMB_DnWUXSAmNFNOaIgTlXrT3dk2krmp9SPyg=",
-      private_key: "JYQ5wbkNfJ2b1Kv_t58cUJJENBIIboVv5Ijzk6a5yH8=",
-      subject: "mailto:example@example.com",
-      expiration: 60 * 60
-    }}
     let(:expected_headers) do
       {
         'Accept'=>'*/*',
@@ -36,14 +30,14 @@ describe Webpush do
 
     let(:vapid_headers) do
       {
-        'Authorization' => 'Webpush stub.jwt.here',
-        'Crypto-Key' => 'p256ecdsa=encoded-public-key'
+        'Authorization' => 'WebPush jwt.encoded.payload',
+        'Crypto-Key' => 'p256ecdsa=' + vapid_public_key.delete('=')
       }
     end
 
     before do
       allow(Webpush::Encryption).to receive(:encrypt).and_return(payload)
-      allow(Webpush::Vapid).to receive(:headers).and_return(vapid_headers)
+      allow(JWT).to receive(:encode).and_return('jwt.encoded.payload')
     end
 
     subject { Webpush.payload_send(
@@ -51,7 +45,7 @@ describe Webpush do
       endpoint: endpoint,
       p256dh: p256dh,
       auth: auth,
-      vapid: vapid)
+      vapid: vapid_options)
     }
 
     it 'calls the relevant service with the correct headers' do

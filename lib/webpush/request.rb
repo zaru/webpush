@@ -2,28 +2,16 @@ require 'jwt'
 require 'base64'
 
 module Webpush
-  include Urlsafe
-
-  class ResponseError < RuntimeError
-  end
-
-  class InvalidSubscription < ResponseError
-  end
-
   # It is temporary URL until supported by the GCM server.
   GCM_URL = 'https://android.googleapis.com/gcm/send'
   TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'
 
   class Request
-    include Urlsafe
-
     def initialize(message: "", subscription:, vapid:, **options)
       endpoint = subscription.fetch(:endpoint)
       @endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
-      @vapid = vapid
-
       @payload = build_payload(message, subscription)
-
+      @vapid_options = vapid
       @options = default_options.merge(options)
     end
 
@@ -67,8 +55,14 @@ module Webpush
     end
 
     def build_vapid_headers
-      audience = uri.scheme + "://" + uri.host
-      Vapid.headers(@vapid.merge(audience: audience))
+      vapid_key = VapidKey.from_keys(vapid_public_key, vapid_private_key)
+      jwt = JWT.encode(jwt_payload, vapid_key.curve, 'ES256')
+      p256ecdsa = vapid_key.public_key_for_push_header
+
+      {
+        'Authorization' => 'WebPush ' + jwt,
+        'Crypto-Key' => 'p256ecdsa=' + p256ecdsa,
+      }
     end
 
     def body
@@ -86,11 +80,39 @@ module Webpush
     end
 
     def dh_param
-      urlsafe_encode64(@payload.fetch(:server_public_key))
+      trim_encode64(@payload.fetch(:server_public_key))
     end
 
     def salt_param
-      urlsafe_encode64(@payload.fetch(:salt))
+      trim_encode64(@payload.fetch(:salt))
+    end
+
+    def jwt_payload
+      {
+        aud: audience,
+        exp: Time.now.to_i + expiration,
+        sub: subject,
+      }
+    end
+
+    def audience
+      uri.scheme + "://" + uri.host
+    end
+
+    def expiration
+      @vapid_options.fetch(:expiration, 24*60*60)
+    end
+
+    def subject
+      @vapid_options.fetch(:subject, 'sender@example.com')
+    end
+
+    def vapid_public_key
+      @vapid_options.fetch(:public_key, nil) #{ raise ConfigurationError, "Missing VAPID public key" }
+    end
+
+    def vapid_private_key
+      @vapid_options.fetch(:private_key, nil) #{ raise ConfigurationError, "Missing VAPID private key" }
     end
 
     def default_options
@@ -106,7 +128,7 @@ module Webpush
     end
 
     def encrypt_payload(message, p256dh:, auth:)
-      Webpush::Encryption.encrypt(message, p256dh, auth)
+      Encryption.encrypt(message, p256dh, auth)
     end
 
     def api_key
@@ -115,6 +137,10 @@ module Webpush
 
     def api_key?
       !(api_key.nil? || api_key.empty?) && @endpoint =~ /\Ahttps:\/\/(android|gcm-http)\.googleapis\.com/
+    end
+
+    def trim_encode64(bin)
+      Base64.urlsafe_encode64(bin).delete('=')
     end
   end
 end
