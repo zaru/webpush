@@ -31,10 +31,9 @@ Sending a web push message to a visitor of your website requires a number of ste
 1. Your server has generated (one-time) a set of [Voluntary Application server Identification (VAPID)](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01) keys.
 2. To send messages through Chrome, you have registered your site through the [Google Developer Console](https://console.developers.google.com/) and have obtained a GCM sender id. For using Google's deprecated GCM protocol instead of VAPID, a separate GCM API key from your app settings would also be necessary.
 3. A 'manifest.json' file, linked from your user's page, identifies your app settings, including the GCM sender ID.
-4. In the user's web browser, the user has accepted the prompt to receive notifications from your site.
 5. Also in the user's web browser, a `serviceWorker` is installed and activated and its `pushManager` property is subscribed to push events with your VAPID public key, with creates a `subscription` JSON object on the client side.
 6. Your server uses the `webpush` gem to send a notification with the `subscription` obtained from the client and an optional payload (the message).
-7. Your service worker is set up to display notifications in the client window on receiving `'push'` events.
+7. Your service worker is set up to receive `'push'` events. To trigger a desktop notification, the user has accepted the prompt to receive notifications from your site.
 
 ### Generating VAPID keys
 
@@ -65,34 +64,6 @@ And link to it somewhere in the `<head>` tag:
 ```html
 <!-- index.html -->
 <link rel="manifest" href="/manifest.json" />
-```
-
-### Accepting notifications
-
-Your application javascript requests permission from the user to accept [notifications](https://developer.mozilla.org/en-US/docs/Web/API/notification).
-
-```javascript
-// application.js
-
-// Let's check if the browser supports notifications
-if (!("Notification" in window)) {
-  console.error("This browser does not support desktop notification");
-}
-
-// Let's check whether notification permissions have already been granted
-else if (Notification.permission === "granted") {
-  console.log("Permission to receive notifications has been granted");
-}
-
-// Otherwise, we need to ask the user for permission
-else if (Notification.permission !== 'denied') {
-  Notification.requestPermission(function (permission) {
-    // If the user accepts, let's create a notification
-    if (permission === "granted") {
-      console.log("Permission to receive notifications has been granted");
-    }
-  });
-}
 ```
 
 ### Installing a service worker
@@ -176,9 +147,9 @@ post "/push" do
 end
 ```
 
-### Receiving the notification
+### Receiving the push event
 
-Your `/serviceworker.js` script can respond to `'push'` events to display desktop notifications.
+Your `/serviceworker.js` script can respond to `'push'` events. One action it can take is to trigger  desktop notifications by calling `showNotification` on the `registration` property.
 
 ```javascript
 // serviceworker.js
@@ -196,7 +167,34 @@ self.addEventListener("push", (event) => {
 });
 ```
 
-If everything worked, you should see a push notification. Yay!
+Before the notifications can be displayed, the user must grant permission for [notifications](https://developer.mozilla.org/en-US/docs/Web/API/notification) in a browser prompt, using something like the example below.
+
+```javascript
+// application.js
+
+// Let's check if the browser supports notifications
+if (!("Notification" in window)) {
+  console.error("This browser does not support desktop notification");
+}
+
+// Let's check whether notification permissions have already been granted
+else if (Notification.permission === "granted") {
+  console.log("Permission to receive notifications has been granted");
+}
+
+// Otherwise, we need to ask the user for permission
+else if (Notification.permission !== 'denied') {
+  Notification.requestPermission(function (permission) {
+    // If the user accepts, let's create a notification
+    if (permission === "granted") {
+      console.log("Permission to receive notifications has been granted");
+    }
+  });
+}
+```
+
+If everything worked, you should see a desktop notification triggered via web
+push. Yay!
 
 Note: if you're using Rails, check out [serviceworker-rails](https://github.com/rossta/serviceworker-rails), a gem that makes it easier to host serviceworker scripts and manifest.json files at canonical endpoints (i.e., non-digested URLs) while taking advantage of the asset pipeline.
 
