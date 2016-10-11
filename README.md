@@ -38,13 +38,13 @@ Sending a web push message to a visitor of your website requires a number of ste
 
 ### Generating VAPID keys
 
-Use `webpush` to generate a VAPID key that has both a `public_key` and `private_key` attribute to be saved on the server side. 
+Use `webpush` to generate a VAPID key that has both a `public_key` and `private_key` attribute to be saved on the server side.
 
 ```ruby
 # One-time, on the server
 vapid_key = Webpush.generate_key
 
-# Save
+# Save these in your application server settings
 vapid_key.public_key
 vapid_key.private_key
 ```
@@ -69,29 +69,30 @@ And link to it somewhere in the `<head>` tag:
 
 ### Accepting notifications
 
-Your application javascript requests permission from the user to accept notifications.
+Your application javascript requests permission from the user to accept [notifications](https://developer.mozilla.org/en-US/docs/Web/API/notification).
 
 ```javascript
 // application.js
-  // Let's check if the browser supports notifications
-  if (!("Notification" in window)) {
-    console.error("This browser does not support desktop notification");
-  }
 
-  // Let's check whether notification permissions have already been granted
-  else if (Notification.permission === "granted") {
-    console.log("Permission to receive notifications has been granted");
-  }
+// Let's check if the browser supports notifications
+if (!("Notification" in window)) {
+  console.error("This browser does not support desktop notification");
+}
 
-  // Otherwise, we need to ask the user for permission
-  else if (Notification.permission !== 'denied') {
-    Notification.requestPermission(function (permission) {
-      // If the user accepts, let's create a notification
-      if (permission === "granted") {
-        console.log("Permission to receive notifications has been granted");
-      }
-    });
-  }
+// Let's check whether notification permissions have already been granted
+else if (Notification.permission === "granted") {
+  console.log("Permission to receive notifications has been granted");
+}
+
+// Otherwise, we need to ask the user for permission
+else if (Notification.permission !== 'denied') {
+  Notification.requestPermission(function (permission) {
+    // If the user accepts, let's create a notification
+    if (permission === "granted") {
+      console.log("Permission to receive notifications has been granted");
+    }
+  });
+}
 ```
 
 ### Installing a service worker
@@ -100,12 +101,15 @@ Your application javascript must register a service worker script at an appropri
 
 ```javascript
 // application.js
+// Register the serviceWorker script at /serviceworker.js from your server if supported
 if (navigator.serviceWorker) {
   navigator.serviceWorker.register('/serviceworker.js')
     .then(function(reg) {
        console.log('Service worker change, registered the service worker');
     });
-} else {
+}
+// Otherwise, no push notifications :(
+else {
   console.error('Service worker is not supported in this browser');
 }
 ```
@@ -122,6 +126,8 @@ Your application javascript would then use the `navigator.serviceWorker.pushMana
 
 ```javascript
 // application.js
+// When serviceWorker is supported, installed, and activated,
+// subscribe the pushManager property with the vapidPublicKey
 navigator.serviceWorker.ready.then((serviceWorkerRegistration) => {
   serviceWorkerRegistration.pushManager
   .subscribe({
@@ -137,6 +143,8 @@ Hook into an client-side or backend event in your app to deliver a push message.
 
 ```javascript
 // application.js
+// Send the subscription and message from the client for the backend
+// to set up a push notification
 $(".webpush-button").on("click", (e) => {
   navigator.serviceWorker.ready
   .then((serviceWorkerRegistration) => {
@@ -150,6 +158,9 @@ $(".webpush-button").on("click", (e) => {
 Imagine a Ruby app endpoint that responds to the request by triggering notification through the `webpush` gem.
 
 ```ruby
+# app.rb
+# Use the webpush gem API to deliver a push notiifcation merging
+# the message, subscription values, and vapid options
 post "/push" do
   Webpush.payload_send(
     message: params[:message]
@@ -164,13 +175,15 @@ post "/push" do
   )
 end
 ```
- 
+
 ### Receiving the notification
 
 Your `/serviceworker.js` script can respond to `'push'` events to display desktop notifications.
 
 ```javascript
-# serviceworker.js
+// serviceworker.js
+// The serviceworker context can respond to 'push' events and trigger
+// notifications on the registration property
 self.addEventListener("push", (event) => {
   let title = (event.data && event.data.text()) || "Yay a message";
   let body = "We have received a push message";
@@ -183,11 +196,13 @@ self.addEventListener("push", (event) => {
 });
 ```
 
-Note: if you're using Rails, you may want to check out [serviceworker-rails](https://github.com/rossta/serviceworker-rails) to make it easier to hots serviceworker scripts and manifest.json files at canonical endpoints (i.e., non-digested URLs) while still taking advantage of the asset pipeline.
+If everything worked, you should see a push notification. Yay!
+
+Note: if you're using Rails, check out [serviceworker-rails](https://github.com/rossta/serviceworker-rails), a gem that makes it easier to host serviceworker scripts and manifest.json files at canonical endpoints (i.e., non-digested URLs) while taking advantage of the asset pipeline.
 
 ## API
 
-### using the payload
+### With a payload
 
 ```ruby
 message = {
@@ -201,11 +216,16 @@ Webpush.payload_send(
   message: JSON.generate(message),
   p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
   auth: "aW1hcmthcmFpa3V6ZQ==",
-  ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks)
+  ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks),
+  vapid: {
+    subject: "mailto:sender@example.com",
+    public_key: ENV['VAPID_PUBLIC_KEY'],
+    private_key: ENV['VAPID_PRIVATE_KEY']
+  }
 )
 ```
 
-### not use the payload
+### Without a payload
 
 ```ruby
 Webpush.payload_send(
