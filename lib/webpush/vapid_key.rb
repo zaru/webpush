@@ -49,6 +49,15 @@ module Webpush
       curve.group
     end
 
+    def to_h
+      { public_key: public_key, private_key: private_key }
+    end
+    alias to_hash to_h
+
+    def inspect
+      "#<#{self.class}:#{object_id.to_s(16)} #{to_h.map { |k, v| ":#{k}=#{v}" }.join(" ")}>"
+    end
+
     private
 
     def to_big_num(key)
