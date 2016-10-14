@@ -42,8 +42,10 @@ module Webpush
       ).perform
     end
 
-    # public_key: vapid_key.public_key.to_bn.to_s(2)
-    # private_key: vapid_key.private_key.to_s(2)
+    # Generate a VapidKey instance to obtain base64 encoded public and private keys
+    # suitable for VAPID protocol JSON web token signing
+    #
+    # @return [Webpush::VapidKey] a new VapidKey instance
     def generate_key
       VapidKey.new
     end
