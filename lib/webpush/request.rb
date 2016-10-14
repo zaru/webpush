@@ -45,7 +45,7 @@ module Webpush
 
       if api_key?
         headers["Authorization"] = api_key
-      else
+      elsif vapid?
         vapid_headers = build_vapid_headers
         headers["Authorization"] = vapid_headers["Authorization"]
         headers["Crypto-Key"] = [ headers["Crypto-Key"], vapid_headers["Crypto-Key"] ].compact.join(";")
@@ -108,11 +108,11 @@ module Webpush
     end
 
     def vapid_public_key
-      @vapid_options.fetch(:public_key, nil) #{ raise ConfigurationError, "Missing VAPID public key" }
+      @vapid_options.fetch(:public_key, nil)
     end
 
     def vapid_private_key
-      @vapid_options.fetch(:private_key, nil) #{ raise ConfigurationError, "Missing VAPID private key" }
+      @vapid_options.fetch(:private_key, nil)
     end
 
     def default_options
@@ -137,6 +137,10 @@ module Webpush
 
     def api_key?
       !(api_key.nil? || api_key.empty?) && @endpoint =~ /\Ahttps:\/\/(android|gcm-http)\.googleapis\.com/
+    end
+
+    def vapid?
+      @vapid_options.any?
     end
 
     def trim_encode64(bin)

@@ -90,6 +90,40 @@ describe Webpush do
 
       expect { subject }.to raise_error
     end
+
+    it 'message is optional' do
+      expect(Webpush::Encryption).to_not receive(:encrypt)
+
+      expected_headers.delete('Crypto-Key')
+      expected_headers.delete('Content-Encoding')
+      expected_headers.delete('Encryption')
+
+      stub_request(:post, expected_endpoint).
+        with(body: nil, headers: expected_headers).
+        to_return(status: 201, body: "", headers: {})
+
+      Webpush.payload_send(endpoint: endpoint)
+    end
+
+    it 'vapid options are optional' do
+      expect(Webpush::Encryption).to receive(:encrypt).and_return(payload)
+
+      expected_headers.delete('Crypto-Key')
+      expected_headers.delete('Authorization')
+
+      stub_request(:post, expected_endpoint).
+        with(body: expected_body, headers: expected_headers).
+        to_return(status: 201, body: "", headers: {})
+
+      result = Webpush.payload_send(
+        message: message,
+        endpoint: endpoint,
+        p256dh: p256dh,
+        auth: auth)
+
+      expect(result).to be_a(Net::HTTPCreated)
+      expect(result.code).to eql('201')
+    end
   end
 
   context 'chrome FCM endpoint' do
