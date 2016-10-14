@@ -28,7 +28,7 @@ Or install it yourself as:
 
 Sending a web push message to a visitor of your website requires a number of steps:
 
-1. Your server has generated (one-time) a set of [Voluntary Application server Identification (VAPID)](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01) keys.
+1. Your server has (optionally) generated (one-time) a set of [Voluntary Application server Identification (VAPID)](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01) keys.
 2. To send messages through Chrome, you have registered your site through the [Google Developer Console](https://console.developers.google.com/) and have obtained a GCM sender id. For using Google's deprecated GCM protocol instead of VAPID, a separate GCM API key from your app settings would also be necessary.
 3. A 'manifest.json' file, linked from your user's page, identifies your app settings, including the GCM sender ID.
 5. Also in the user's web browser, a `serviceWorker` is installed and activated and its `pushManager` property is subscribed to push events with your VAPID public key, with creates a `subscription` JSON object on the client side.
@@ -108,6 +108,10 @@ navigator.serviceWorker.ready.then((serviceWorkerRegistration) => {
 });
 ```
 
+Note: If you will not be sending VAPID details, then there is no need generate VAPID
+keys, and the `applicationServerKey` parameter may be omitted from the
+`pushManager.subscribe` call.
+
 ### Triggering a web push notification
 
 Hook into an client-side or backend event in your app to deliver a push message. The server must be made aware of the `subscription`. In the example below, we send the JSON generated subscription object to our backend at the "/push" endpoint with a message.
@@ -146,6 +150,9 @@ post "/push" do
   )
 end
 ```
+
+Note: the VAPID options should be omitted if the client-side subscription was
+generated without the `applicationServerKey` parameter described earlier.
 
 ### Receiving the push event
 
