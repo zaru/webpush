@@ -5,15 +5,12 @@ require 'net/http'
 require 'json'
 
 require 'webpush/version'
+require 'webpush/errors'
+require 'webpush/vapid_key'
 require 'webpush/encryption'
 require 'webpush/request'
 
 module Webpush
-
-  # It is temporary URL until supported by the GCM server.
-  GCM_URL = 'https://android.googleapis.com/gcm/send'
-  TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'
-
   class << self
     # Deliver the payload to the required endpoint given by the JavaScript
     # PushSubscription. Including an optional message requires p256dh and
@@ -23,23 +20,32 @@ module Webpush
     # @param message [String] the optional payload
     # @param p256dh [String] the user's public ECDH key given by the PushSubscription
     # @param auth [String] the user's private ECDH key given by the PushSubscription
+    # @param vapid [Hash<Symbol,String>] options for VAPID
+    # @option vapid [String] :subject contact URI for the app server as a "mailto:" or an "https:"
+    # @option vapid [String] :public_key the VAPID public key
+    # @option vapid [String] :private_key the VAPID private key
     # @param options [Hash<Symbol,String>] additional options for the notification
-    # @option options [String] :api_key required for Google, omit for Firefox
     # @option options [#to_s] :ttl Time-to-live in seconds
-    def payload_send(endpoint:, message: "", p256dh: "", auth: "", **options)
-      endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
-
-      payload = build_payload(message, p256dh, auth)
-
-      Webpush::Request.new(endpoint, options.merge(payload: payload)).perform
+    def payload_send(message: "", endpoint:, p256dh: "", auth: "", vapid: {}, **options)
+      subscription = {
+        endpoint: endpoint,
+        keys: {
+          p256dh: p256dh,
+          auth: auth
+        }
+      }
+      Webpush::Request.new(
+        message: message,
+        subscription: subscription,
+        vapid: vapid,
+        **options
+      ).perform
     end
 
-    private
-
-    def build_payload(message, p256dh, auth)
-      return {} if message.nil? || message.empty?
-
-      Webpush::Encryption.encrypt(message, p256dh, auth)
+    # public_key: vapid_key.public_key.to_bn.to_s(2)
+    # private_key: vapid_key.private_key.to_s(2)
+    def generate_key
+      VapidKey.new
     end
   end
 end

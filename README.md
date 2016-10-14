@@ -4,7 +4,7 @@
 [![Build Status](https://travis-ci.org/zaru/webpush.svg?branch=master)](https://travis-ci.org/zaru/webpush)
 [![Gem Version](https://badge.fury.io/rb/webpush.svg)](https://badge.fury.io/rb/webpush)
 
-This Gem will send the Web Push API. It supports the encryption necessary to payload.
+This gem makes it possible to send push messages to web browsers from Ruby backends using the [Web Push Protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-10). It supports [Message Encryption for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-encryption) to send messages securely from server to user agent.
 
 Payload is supported by Chrome50+, Firefox48+.
 
@@ -26,7 +26,188 @@ Or install it yourself as:
 
 ## Usage
 
-### using the payload
+Sending a web push message to a visitor of your website requires a number of steps:
+
+1. Your server has (optionally) generated (one-time) a set of [Voluntary Application server Identification (VAPID)](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01) keys.
+2. To send messages through Chrome, you have registered your site through the [Google Developer Console](https://console.developers.google.com/) and have obtained a GCM sender id. For using Google's deprecated GCM protocol instead of VAPID, a separate GCM API key from your app settings would also be necessary.
+3. A 'manifest.json' file, linked from your user's page, identifies your app settings, including the GCM sender ID.
+5. Also in the user's web browser, a `serviceWorker` is installed and activated and its `pushManager` property is subscribed to push events with your VAPID public key, with creates a `subscription` JSON object on the client side.
+6. Your server uses the `webpush` gem to send a notification with the `subscription` obtained from the client and an optional payload (the message).
+7. Your service worker is set up to receive `'push'` events. To trigger a desktop notification, the user has accepted the prompt to receive notifications from your site.
+
+### Generating VAPID keys
+
+Use `webpush` to generate a VAPID key that has both a `public_key` and `private_key` attribute to be saved on the server side.
+
+```ruby
+# One-time, on the server
+vapid_key = Webpush.generate_key
+
+# Save these in your application server settings
+vapid_key.public_key
+vapid_key.private_key
+```
+
+### Declaring manifest.json
+
+For Chrome web push, add the GCM sender id to a `manifest.json` file served at the scope of your app (or above), like at the root.
+
+```javascript
+{
+  "name": "My Website",
+  "gcm_sender_id": "1006629465533"
+}
+```
+
+And link to it somewhere in the `<head>` tag:
+
+```html
+<!-- index.html -->
+<link rel="manifest" href="/manifest.json" />
+```
+
+### Installing a service worker
+
+Your application javascript must register a service worker script at an appropriate scope (we're sticking with the root).
+
+```javascript
+// application.js
+// Register the serviceWorker script at /serviceworker.js from your server if supported
+if (navigator.serviceWorker) {
+  navigator.serviceWorker.register('/serviceworker.js')
+    .then(function(reg) {
+       console.log('Service worker change, registered the service worker');
+    });
+}
+// Otherwise, no push notifications :(
+else {
+  console.error('Service worker is not supported in this browser');
+}
+```
+
+### Subscribing to push notifications
+
+The VAPID public key you generated earlier is made available to the client as a `UInt8Array`. To do this, one way would be to expose the urlsafe-decoded bytes from Ruby to JavaScript when rendering the HTML template. (Global variables used here for simplicity).
+
+```javascript
+window.vapidPublicKey = new Uint8Array(<%= Base64.urlsafe_decode64(ENV['VAPID_PUBLIC_KEY']).bytes %>);
+```
+
+Your application javascript would then use the `navigator.serviceWorker.pushManager` to subscribe to push notifications, passing the VAPID public key to the subscription settings.
+
+```javascript
+// application.js
+// When serviceWorker is supported, installed, and activated,
+// subscribe the pushManager property with the vapidPublicKey
+navigator.serviceWorker.ready.then((serviceWorkerRegistration) => {
+  serviceWorkerRegistration.pushManager
+  .subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: window.vapidPublicKey
+  });
+});
+```
+
+Note: If you will not be sending VAPID details, then there is no need generate VAPID
+keys, and the `applicationServerKey` parameter may be omitted from the
+`pushManager.subscribe` call.
+
+### Triggering a web push notification
+
+Hook into an client-side or backend event in your app to deliver a push message. The server must be made aware of the `subscription`. In the example below, we send the JSON generated subscription object to our backend at the "/push" endpoint with a message.
+
+```javascript
+// application.js
+// Send the subscription and message from the client for the backend
+// to set up a push notification
+$(".webpush-button").on("click", (e) => {
+  navigator.serviceWorker.ready
+  .then((serviceWorkerRegistration) => {
+    serviceWorkerRegistration.pushManager.getSubscription()
+    .then((subscription) => {
+      $.post("/push", { subscription: subscription.toJSON(), message: "You clicked a button!" });
+    });
+});
+```
+
+Imagine a Ruby app endpoint that responds to the request by triggering notification through the `webpush` gem.
+
+```ruby
+# app.rb
+# Use the webpush gem API to deliver a push notiifcation merging
+# the message, subscription values, and vapid options
+post "/push" do
+  Webpush.payload_send(
+    message: params[:message]
+    endpoint: params[:subscription][:endpoint],
+    p256dh: params[:subscription][:keys][:p256dh],
+    auth: params[:subscription][:keys][:p256dh],
+    vapid: {
+      subject: "mailto:sender@example.com",
+      public_key: ENV['VAPID_PUBLIC_KEY'],
+      private_key: ENV['VAPID_PRIVATE_KEY']
+    }
+  )
+end
+```
+
+Note: the VAPID options should be omitted if the client-side subscription was
+generated without the `applicationServerKey` parameter described earlier.
+
+### Receiving the push event
+
+Your `/serviceworker.js` script can respond to `'push'` events. One action it can take is to trigger  desktop notifications by calling `showNotification` on the `registration` property.
+
+```javascript
+// serviceworker.js
+// The serviceworker context can respond to 'push' events and trigger
+// notifications on the registration property
+self.addEventListener("push", (event) => {
+  let title = (event.data && event.data.text()) || "Yay a message";
+  let body = "We have received a push message";
+  let tag = "push-simple-demo-notification-tag";
+  let icon = '/assets/my-logo-120x120.png';
+
+  event.waitUntil(
+    self.registration.showNotification(title, { body, icon, tag })
+  )
+});
+```
+
+Before the notifications can be displayed, the user must grant permission for [notifications](https://developer.mozilla.org/en-US/docs/Web/API/notification) in a browser prompt, using something like the example below.
+
+```javascript
+// application.js
+
+// Let's check if the browser supports notifications
+if (!("Notification" in window)) {
+  console.error("This browser does not support desktop notification");
+}
+
+// Let's check whether notification permissions have already been granted
+else if (Notification.permission === "granted") {
+  console.log("Permission to receive notifications has been granted");
+}
+
+// Otherwise, we need to ask the user for permission
+else if (Notification.permission !== 'denied') {
+  Notification.requestPermission(function (permission) {
+    // If the user accepts, let's create a notification
+    if (permission === "granted") {
+      console.log("Permission to receive notifications has been granted");
+    }
+  });
+}
+```
+
+If everything worked, you should see a desktop notification triggered via web
+push. Yay!
+
+Note: if you're using Rails, check out [serviceworker-rails](https://github.com/rossta/serviceworker-rails), a gem that makes it easier to host serviceworker scripts and manifest.json files at canonical endpoints (i.e., non-digested URLs) while taking advantage of the asset pipeline.
+
+## API
+
+### With a payload
 
 ```ruby
 message = {
@@ -36,22 +217,25 @@ message = {
 }
 
 Webpush.payload_send(
-  endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
+  endpoint: "https://fcm.googleapis.com/gcm/send/eah7hak....",
   message: JSON.generate(message),
   p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
   auth: "aW1hcmthcmFpa3V6ZQ==",
-  ttl: 600, #optional, ttl in seconds, defaults to 2419200 (4 weeks)
-  api_key: "[GoogleDeveloper APIKEY]" # optional, not used in Firefox.
+  ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks),
+  vapid: {
+    subject: "mailto:sender@example.com",
+    public_key: ENV['VAPID_PUBLIC_KEY'],
+    private_key: ENV['VAPID_PRIVATE_KEY']
+  }
 )
 ```
 
-### not use the payload
+### Without a payload
 
 ```ruby
 Webpush.payload_send(
-  endpoint: "https://android.googleapis.com/gcm/send/eah7hak....",
-  ttl: 600, #optional, ttl in seconds, defaults to 2419200 (4 weeks)
-  api_key: "[GoogleDeveloper APIKEY]" # optional, not used in Firefox.
+  endpoint: "https://fcm.googleapis.com/gcm/send/eah7hak....",
+  ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks)
 )
 ```
 
