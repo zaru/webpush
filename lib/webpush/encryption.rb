@@ -13,12 +13,12 @@ module Webpush
       server_public_key_bn = server.public_key.to_bn
 
       group = OpenSSL::PKey::EC::Group.new(group_name)
-      client_public_key_bn = OpenSSL::BN.new(urlsafe_decode64(p256dh), 2)
+      client_public_key_bn = OpenSSL::BN.new(Webpush.decode64(p256dh), 2)
       client_public_key = OpenSSL::PKey::EC::Point.new(group, client_public_key_bn)
 
       shared_secret = server.dh_compute_key(client_public_key)
 
-      client_auth_token = urlsafe_decode64(auth)
+      client_auth_token = Webpush.decode64(auth)
 
       prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: "Content-Encoding: auth\0").next_bytes(32)
 
@@ -89,16 +89,6 @@ module Webpush
 
     def blank?(value)
       value.nil? || value.empty?
-    end
-
-    def urlsafe_decode64(str)
-      # For Ruby < 2.3, Base64.urlsafe_decode64 strict decodes and will raise errors if encoded value is not properly padded
-      # Implementation: http://ruby-doc.org/stdlib-2.3.0/libdoc/base64/rdoc/Base64.html#method-i-urlsafe_decode64
-      if !str.end_with?("=") && str.length % 4 != 0
-        str = str.ljust((str.length + 3) & ~3, "=")
-      end
-
-      Base64.urlsafe_decode64(str)
     end
   end
 end
