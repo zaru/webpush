@@ -28,12 +28,11 @@ Or install it yourself as:
 
 Sending a web push message to a visitor of your website requires a number of steps:
 
-1. Your server has (optionally) generated (one-time) a set of [Voluntary Application server Identification (VAPID)](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01) keys.
-2. To send messages through Chrome, you have registered your site through the [Google Developer Console](https://console.developers.google.com/) and have obtained a GCM sender id. For using Google's deprecated GCM protocol instead of VAPID, a separate GCM API key from your app settings would also be necessary.
-3. A `manifest.json` file, linked from your user's page, identifies your app settings, including the GCM sender ID.
-5. Also in the user's web browser, a `serviceWorker` is installed and activated and its `pushManager` property is subscribed to push events with your VAPID public key, with creates a `subscription` JSON object on the client side.
-6. Your server uses the `webpush` gem to send a notification with the `subscription` obtained from the client and an optional payload (the message).
-7. Your service worker is set up to receive `'push'` events. To trigger a desktop notification, the user has accepted the prompt to receive notifications from your site.
+1. Your server has (optionally) generated (one-time) a set of [Voluntary Application server Identification (VAPID)](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01) keys. Otherwise, to send messages through Chrome, you have registered your site through the [Google Developer Console](https://console.developers.google.com/) and have obtained a GCM sender id and GCM API key from your app settings.
+2. A `manifest.json` file, linked from your user's page, identifies your app settings.
+3. Also in the user's web browser, a `serviceWorker` is installed and activated and its `pushManager` property is subscribed to push events with your VAPID public key, with creates a `subscription` JSON object on the client side.
+4. Your server uses the `webpush` gem to send a notification with the `subscription` obtained from the client and an optional payload (the message).
+5. Your service worker is set up to receive `'push'` events. To trigger a desktop notification, the user has accepted the prompt to receive notifications from your site.
 
 ### Generating VAPID keys
 
@@ -50,7 +49,14 @@ vapid_key.private_key
 
 ### Declaring manifest.json
 
-For Chrome web push, add the GCM sender id to a `manifest.json` file served at the scope of your app (or above), like at the root.
+Check out the [Web Manifest docs](https://developer.mozilla.org/en-US/docs/Web/Manifest) for details on what to include in your `manifest.json` file. If using VAPID, no app credentials are needed.
+
+```javascript
+{
+  "name": "My Website"
+}
+```
+For Chrome web push, add the GCM sender id to a `manifest.json`.
 
 ```javascript
 {
@@ -59,7 +65,7 @@ For Chrome web push, add the GCM sender id to a `manifest.json` file served at t
 }
 ```
 
-And link to it somewhere in the `<head>` tag:
+The file is served within the scope of your service worker script, like at the root, and link to it somewhere in the `<head>` tag:
 
 ```html
 <!-- index.html -->
@@ -166,7 +172,9 @@ end
 ```
 
 Note: the VAPID options should be omitted if the client-side subscription was
-generated without the `applicationServerKey` parameter described earlier.
+generated without the `applicationServerKey` parameter described earlier. You
+would instead pass the GCM api key along with the api request as shown in the
+Usage section below.
 
 ### Receiving the push event
 
@@ -265,6 +273,17 @@ Webpush.payload_send(
     public_key: ENV['VAPID_PUBLIC_KEY'],
     private_key: ENV['VAPID_PRIVATE_KEY']
   }
+)
+
+### With GCM api key
+
+```ruby
+Webpush.payload_send(
+  endpoint: "https://fcm.googleapis.com/gcm/send/eah7hak....",
+  message: "A message",
+  p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
+  auth: "aW1hcmthcmFpa3V6ZQ==",
+  api_key: "<GCM API KEY>"
 )
 
 ### ServiceWorker sample
