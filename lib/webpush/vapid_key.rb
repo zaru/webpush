@@ -30,7 +30,7 @@ module Webpush
     # Convenience
     # @return base64 urlsafe-encoded binary representaion of 32-byte VAPID private key
     def private_key
-      Base64.urlsafe_encode64(curve.private_key.to_s(2))
+      Webpush.encode64(curve.private_key.to_s(2))
     end
 
     def public_key=(key)
@@ -61,11 +61,11 @@ module Webpush
     private
 
     def to_big_num(key)
-      OpenSSL::BN.new(Base64.urlsafe_decode64(key), 2)
+      OpenSSL::BN.new(Webpush.decode64(key), 2)
     end
 
     def encode64(bin)
-      Base64.urlsafe_encode64(bin)
+      Webpush.encode64(bin)
     end
 
     def trim_encode64(bin)

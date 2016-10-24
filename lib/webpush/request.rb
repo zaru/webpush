@@ -144,7 +144,7 @@ module Webpush
     end
 
     def trim_encode64(bin)
-      Base64.urlsafe_encode64(bin).delete('=')
+      Webpush.encode64(bin).delete('=')
     end
   end
 end

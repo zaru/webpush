@@ -13,12 +13,12 @@ module Webpush
       server_public_key_bn = server.public_key.to_bn
 
       group = OpenSSL::PKey::EC::Group.new(group_name)
-      client_public_key_bn = OpenSSL::BN.new(Base64.urlsafe_decode64(p256dh), 2)
+      client_public_key_bn = OpenSSL::BN.new(Webpush.decode64(p256dh), 2)
       client_public_key = OpenSSL::PKey::EC::Point.new(group, client_public_key_bn)
 
       shared_secret = server.dh_compute_key(client_public_key)
 
-      client_auth_token = Base64.urlsafe_decode64(auth)
+      client_auth_token = Webpush.decode64(auth)
 
       prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: "Content-Encoding: auth\0").next_bytes(32)
 
