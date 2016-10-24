@@ -30,7 +30,7 @@ Sending a web push message to a visitor of your website requires a number of ste
 
 1. Your server has (optionally) generated (one-time) a set of [Voluntary Application server Identification (VAPID)](https://tools.ietf.org/html/draft-ietf-webpush-vapid-01) keys.
 2. To send messages through Chrome, you have registered your site through the [Google Developer Console](https://console.developers.google.com/) and have obtained a GCM sender id. For using Google's deprecated GCM protocol instead of VAPID, a separate GCM API key from your app settings would also be necessary.
-3. A 'manifest.json' file, linked from your user's page, identifies your app settings, including the GCM sender ID.
+3. A `manifest.json` file, linked from your user's page, identifies your app settings, including the GCM sender ID.
 5. Also in the user's web browser, a `serviceWorker` is installed and activated and its `pushManager` property is subscribed to push events with your VAPID public key, with creates a `subscription` JSON object on the client side.
 6. Your server uses the `webpush` gem to send a notification with the `subscription` obtained from the client and an optional payload (the message).
 7. Your service worker is set up to receive `'push'` events. To trigger a desktop notification, the user has accepted the prompt to receive notifications from your site.
@@ -75,9 +75,9 @@ Your application javascript must register a service worker script at an appropri
 // Register the serviceWorker script at /serviceworker.js from your server if supported
 if (navigator.serviceWorker) {
   navigator.serviceWorker.register('/serviceworker.js')
-    .then(function(reg) {
-       console.log('Service worker change, registered the service worker');
-    });
+  .then(function(reg) {
+     console.log('Service worker change, registered the service worker');
+  });
 }
 // Otherwise, no push notifications :(
 else {
@@ -87,13 +87,15 @@ else {
 
 ### Subscribing to push notifications
 
+#### With VAPID
+
 The VAPID public key you generated earlier is made available to the client as a `UInt8Array`. To do this, one way would be to expose the urlsafe-decoded bytes from Ruby to JavaScript when rendering the HTML template. (Global variables used here for simplicity).
 
 ```javascript
 window.vapidPublicKey = new Uint8Array(<%= Base64.urlsafe_decode64(ENV['VAPID_PUBLIC_KEY']).bytes %>);
 ```
 
-Your application javascript would then use the `navigator.serviceWorker.pushManager` to subscribe to push notifications, passing the VAPID public key to the subscription settings.
+Your application javascript uses the `navigator.serviceWorker.pushManager` to subscribe to push notifications, passing the VAPID public key to the subscription settings.
 
 ```javascript
 // application.js
@@ -108,9 +110,21 @@ navigator.serviceWorker.ready.then((serviceWorkerRegistration) => {
 });
 ```
 
-Note: If you will not be sending VAPID details, then there is no need generate VAPID
-keys, and the `applicationServerKey` parameter may be omitted from the
-`pushManager.subscribe` call.
+#### Without VAPID
+
+If you will not be sending VAPID details, then there is no need generate VAPID keys, and the `applicationServerKey` parameter may be omitted from the `pushManager.subscribe` call.
+
+```javascript
+// application.js
+// When serviceWorker is supported, installed, and activated,
+// subscribe the pushManager property with the vapidPublicKey
+navigator.serviceWorker.ready.then((serviceWorkerRegistration) => {
+  serviceWorkerRegistration.pushManager
+  .subscribe({
+    userVisibleOnly: true
+  });
+});
+```
 
 ### Triggering a web push notification
 
@@ -156,7 +170,7 @@ generated without the `applicationServerKey` parameter described earlier.
 
 ### Receiving the push event
 
-Your `/serviceworker.js` script can respond to `'push'` events. One action it can take is to trigger  desktop notifications by calling `showNotification` on the `registration` property.
+Your `/serviceworker.js` script may respond to `'push'` events. One action it can take is to trigger desktop notifications by calling `showNotification` on the `registration` property.
 
 ```javascript
 // serviceworker.js
@@ -222,11 +236,6 @@ Webpush.payload_send(
   p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
   auth: "aW1hcmthcmFpa3V6ZQ==",
   ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks),
-  vapid: {
-    subject: "mailto:sender@example.com",
-    public_key: ENV['VAPID_PUBLIC_KEY'],
-    private_key: ENV['VAPID_PRIVATE_KEY']
-  }
 )
 ```
 
@@ -235,9 +244,28 @@ Webpush.payload_send(
 ```ruby
 Webpush.payload_send(
   endpoint: "https://fcm.googleapis.com/gcm/send/eah7hak....",
-  ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks)
+  p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
+  auth: "aW1hcmthcmFpa3V6ZQ=="
 )
 ```
+
+### With VAPID
+
+VAPID details are given as a hash with `:subject`, `:public_key`, and
+`:private_key`. The `:subject` is a contact URI for the application server as either a "mailto:" or an "https:" address. The `:public_key` and `:private_key` should be passed as the base64-encoded values generated with `Webpush.generate_key`.
+
+```ruby
+Webpush.payload_send(
+  endpoint: "https://fcm.googleapis.com/gcm/send/eah7hak....",
+  message: "A message",
+  p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
+  auth: "aW1hcmthcmFpa3V6ZQ==",
+  vapid: {
+    subject: "mailto:sender@example.com"
+    public_key: ENV['VAPID_PUBLIC_KEY'],
+    private_key: ENV['VAPID_PRIVATE_KEY']
+  }
+)
 
 ### ServiceWorker sample
 
