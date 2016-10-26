@@ -1,5 +1,11 @@
 module Webpush
+  # Class for abstracting the generation and encoding of elliptic curve public and private keys for use with the VAPID protocol
+  #
+  # @attr_reader [OpenSSL::PKey::EC] :curve the OpenSSL elliptic curve instance
   class VapidKey
+    # Create a VapidKey instance from encoded elliptic curve public and private keys
+    #
+    # @return [Webpush::VapidKey] a VapidKey instance for the given public and private keys
     def self.from_keys(public_key, private_key)
       key = new
       key.public_key = public_key
@@ -15,30 +21,33 @@ module Webpush
       @curve.generate_key
     end
 
-    # Retrieve the encoded EC public key for server-side storage
-    # @return encoded binary representaion of 65-byte VAPID public key
+    # Retrieve the encoded elliptic curve public key for VAPID protocol
+    #
+    # @return [String] encoded binary representation of 65-byte VAPID public key
     def public_key
       encode64(curve.public_key.to_bn.to_s(2))
     end
 
-    # Retrieve EC public key for Web Push
-    # @return the encoded VAPID public key suitable for Web Push transport
+    # Retrieve the encoded elliptic curve public key suitable for the Web Push request
+    #
+    # @return [String] the encoded VAPID public key for us in 'Encryption' header
     def public_key_for_push_header
       trim_encode64(curve.public_key.to_bn.to_s(2))
     end
 
-    # Convenience
-    # @return base64 urlsafe-encoded binary representaion of 32-byte VAPID private key
+    # Retrive the encoded elliptic curve private key for VAPID protocol
+    #
+    # @return [String] base64 urlsafe-encoded binary representation of 32-byte VAPID private key
     def private_key
-      Webpush.encode64(curve.private_key.to_s(2))
+      encode64(curve.private_key.to_s(2))
     end
 
     def public_key=(key)
-      @curve.public_key = OpenSSL::PKey::EC::Point.new(group, to_big_num(key))
+      curve.public_key = OpenSSL::PKey::EC::Point.new(group, to_big_num(key))
     end
 
     def private_key=(key)
-      @curve.private_key = to_big_num(key)
+      curve.private_key = to_big_num(key)
     end
 
     def curve_name
