@@ -274,6 +274,7 @@ Webpush.payload_send(
     private_key: ENV['VAPID_PRIVATE_KEY']
   }
 )
+```
 
 ### With GCM api key
 
@@ -285,6 +286,7 @@ Webpush.payload_send(
   auth: "aW1hcmthcmFpa3V6ZQ==",
   api_key: "<GCM API KEY>"
 )
+```
 
 ### ServiceWorker sample
 
