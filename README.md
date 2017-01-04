@@ -147,6 +147,7 @@ $(".webpush-button").on("click", (e) => {
     .then((subscription) => {
       $.post("/push", { subscription: subscription.toJSON(), message: "You clicked a button!" });
     });
+  });
 });
 ```
 
