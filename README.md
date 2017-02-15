@@ -159,7 +159,7 @@ Imagine a Ruby app endpoint that responds to the request by triggering notificat
 # the message, subscription values, and vapid options
 post "/push" do
   Webpush.payload_send(
-    message: params[:message]
+    message: params[:message],
     endpoint: params[:subscription][:endpoint],
     p256dh: params[:subscription][:keys][:p256dh],
     auth: params[:subscription][:keys][:auth],
