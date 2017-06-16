@@ -24,9 +24,15 @@ module Webpush
 
       if resp.is_a?(Net::HTTPGone) ||   #Firefox unsubscribed response
           (resp.is_a?(Net::HTTPBadRequest) && resp.message == "UnauthorizedRegistration")  #Chrome unsubscribed response
-        raise InvalidSubscription.new(resp.inspect)
-      elsif !resp.is_a?(Net::HTTPSuccess)  #unknown/unhandled response error
-        raise ResponseError.new "host: #{uri.host}, #{resp.inspect}\nbody:\n#{resp.body}"
+        raise InvalidSubscription.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPNotFound) # 404
+        raise ExpiredSubscription.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPRequestEntityTooLarge) # 413
+        raise PayloadTooLarge.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPTooManyRequests) # 429, try again later!
+        raise TooManyRequests.new(resp, uri.host)
+      elsif !resp.is_a?(Net::HTTPSuccess)  # unknown/unhandled response error
+        raise ResponseError.new(resp, uri.host)
       end
 
       resp

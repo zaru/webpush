@@ -201,11 +201,40 @@ describe Webpush do
       expect { subject }.not_to raise_error(Webpush::InvalidSubscription)
     end
 
+    it 'raises ExpiredSubscription if the API returns a 404 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 404, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::ExpiredSubscription)
+    end
+
+    it 'raises PayloadTooLarge if the API returns a 413 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 413, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::PayloadTooLarge)
+    end
+
+    it 'raises TooManyRequests if the API returns a 429 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 429, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::TooManyRequests)
+    end
+
     it 'raises ResponseError for unsuccessful status code by default' do
       stub_request(:post, expected_endpoint).
         to_return(status: 401, body: "", headers: {})
 
       expect { subject }.to raise_error(Webpush::ResponseError)
+    end
+
+    it 'supplies the original status code on the ResponseError' do
+      stub_request(:post, expected_endpoint).
+        to_return(status: 401, body: "Oh snap", headers: {})
+
+      expect { subject }.to raise_error { |error|
+        expect(error).to be_a(Webpush::ResponseError)
+        expect(error.response.code).to eq '401'
+        expect(error.response.body).to eq 'Oh snap'
+      }
     end
 
     it 'raises exception on error by default' do
