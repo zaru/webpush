@@ -56,6 +56,19 @@ describe Webpush do
       }
     end
 
+    it 'sets the error message to be the host + stringified response' do
+      stub_request(:post, expected_endpoint).
+        to_return(status: 401, body: "Oh snap", headers: {})
+
+      host = URI.parse(expected_endpoint).host
+
+      expect { subject }.to raise_error { |error|
+        expect(error.message).to eq(
+          "host: #{host}, #<Net::HTTPUnauthorized 401  readbody=true>\nbody:\nOh snap"
+        )
+      }
+    end
+
     it 'raises exception on error by default' do
       stub_request(:post, expected_endpoint).to_raise(StandardError)
 
