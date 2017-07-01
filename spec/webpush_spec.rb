@@ -5,6 +5,77 @@ describe Webpush do
     expect(Webpush::VERSION).not_to be nil
   end
 
+  shared_examples 'web push protocol standard error handling' do
+    it 'raises InvalidSubscription if and only if the combination of status code and message indicate an invalid subscription' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 410, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::InvalidSubscription)
+
+      stub_request(:post, expected_endpoint).
+          to_return(status: [400, "UnauthorizedRegistration"], body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::InvalidSubscription)
+
+      stub_request(:post, expected_endpoint).
+          to_return(status: 400, body: "", headers: {})
+      expect { subject }.not_to raise_error(Webpush::InvalidSubscription)
+    end
+
+    it 'raises ExpiredSubscription if the API returns a 404 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 404, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::ExpiredSubscription)
+    end
+
+    it 'raises PayloadTooLarge if the API returns a 413 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 413, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::PayloadTooLarge)
+    end
+
+    it 'raises TooManyRequests if the API returns a 429 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 429, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::TooManyRequests)
+    end
+
+    it 'raises ResponseError for unsuccessful status code by default' do
+      stub_request(:post, expected_endpoint).
+        to_return(status: 401, body: "", headers: {})
+
+      expect { subject }.to raise_error(Webpush::ResponseError)
+    end
+
+    it 'supplies the original status code on the ResponseError' do
+      stub_request(:post, expected_endpoint).
+        to_return(status: 401, body: "Oh snap", headers: {})
+
+      expect { subject }.to raise_error { |error|
+        expect(error).to be_a(Webpush::ResponseError)
+        expect(error.response.code).to eq '401'
+        expect(error.response.body).to eq 'Oh snap'
+      }
+    end
+
+    it 'sets the error message to be the host + stringified response' do
+      stub_request(:post, expected_endpoint).
+        to_return(status: 401, body: "Oh snap", headers: {})
+
+      host = URI.parse(expected_endpoint).host
+
+      expect { subject }.to raise_error { |error|
+        expect(error.message).to eq(
+          "host: #{host}, #<Net::HTTPUnauthorized 401  readbody=true>\nbody:\nOh snap"
+        )
+      }
+    end
+
+    it 'raises exception on error by default' do
+      stub_request(:post, expected_endpoint).to_raise(StandardError)
+
+      expect { subject }.to raise_error
+    end
+  end
+
   shared_examples 'request headers with VAPID' do
     let(:message) { JSON.generate({ body: 'body' }) }
     let(:p256dh) { 'BN4GvZtEZiZuqFxSKVZfSfluwKBD7UxHNBmWkfiZfCtgDE8Bwh-_MtLXbBxTBAWH9r7IPKL0lhdcaqtL1dfxU5E=' }
@@ -64,32 +135,7 @@ describe Webpush do
       expect(result.code).to eql('201')
     end
 
-    it 'raises InvalidSubscription if and only if the combination of status code and message indicate an invalid subscription' do
-      stub_request(:post, expected_endpoint).
-          to_return(status: 410, body: "", headers: {})
-      expect { subject }.to raise_error(Webpush::InvalidSubscription)
-
-      stub_request(:post, expected_endpoint).
-          to_return(status: [400, "UnauthorizedRegistration"], body: "", headers: {})
-      expect { subject }.to raise_error(Webpush::InvalidSubscription)
-
-      stub_request(:post, expected_endpoint).
-          to_return(status: 400, body: "", headers: {})
-      expect { subject }.not_to raise_error(Webpush::InvalidSubscription)
-    end
-
-    it 'raises ResponseError for unsuccessful status code by default' do
-      stub_request(:post, expected_endpoint).
-        to_return(status: 401, body: "", headers: {})
-
-      expect { subject }.to raise_error(Webpush::ResponseError)
-    end
-
-    it 'raises exception on error by default' do
-      stub_request(:post, expected_endpoint).to_raise(StandardError)
-
-      expect { subject }.to raise_error
-    end
+    include_examples 'web push protocol standard error handling'
 
     it 'message is optional' do
       expect(Webpush::Encryption).to_not receive(:encrypt)
@@ -187,32 +233,7 @@ describe Webpush do
       expect(result.code).to eql('201')
     end
 
-    it 'raises InvalidSubscription if and only if the combination of status code and message indicate an invalid subscription' do
-      stub_request(:post, expected_endpoint).
-          to_return(status: 410, body: "", headers: {})
-      expect { subject }.to raise_error(Webpush::InvalidSubscription)
-
-      stub_request(:post, expected_endpoint).
-          to_return(status: [400, "UnauthorizedRegistration"], body: "", headers: {})
-      expect { subject }.to raise_error(Webpush::InvalidSubscription)
-
-      stub_request(:post, expected_endpoint).
-          to_return(status: 400, body: "", headers: {})
-      expect { subject }.not_to raise_error(Webpush::InvalidSubscription)
-    end
-
-    it 'raises ResponseError for unsuccessful status code by default' do
-      stub_request(:post, expected_endpoint).
-        to_return(status: 401, body: "", headers: {})
-
-      expect { subject }.to raise_error(Webpush::ResponseError)
-    end
-
-    it 'raises exception on error by default' do
-      stub_request(:post, expected_endpoint).to_raise(StandardError)
-
-      expect { subject }.to raise_error
-    end
+    include_examples 'web push protocol standard error handling'
 
     it 'message and encryption keys are optional' do
       expect(Webpush::Encryption).to_not receive(:encrypt)
