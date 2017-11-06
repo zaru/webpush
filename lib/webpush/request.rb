@@ -62,7 +62,7 @@ module Webpush
 
     def build_vapid_headers
       vapid_key = VapidKey.from_keys(vapid_public_key, vapid_private_key)
-      jwt = JWT.encode(jwt_payload, vapid_key.curve, 'ES256')
+      jwt = JWT.encode(jwt_payload, vapid_key.curve, 'ES256', jwt_header_fields)
       p256ecdsa = vapid_key.public_key_for_push_header
 
       {
@@ -99,6 +99,10 @@ module Webpush
         exp: Time.now.to_i + expiration,
         sub: subject,
       }
+    end
+
+    def jwt_header_fields
+      { 'typ' => 'JWT' }
     end
 
     def audience

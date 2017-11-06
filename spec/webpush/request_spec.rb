@@ -41,11 +41,12 @@ describe Webpush::Request do
         exp: time.to_i + 24 * 60 * 60,
         sub: 'mailto:sender@example.com',
       }
+      jwt_header_fields = { 'typ' => 'JWT' }
 
       vapid_key = Webpush::VapidKey.from_keys(vapid_public_key, vapid_private_key)
       expect(Time).to receive(:now).and_return(time)
       expect(Webpush::VapidKey).to receive(:from_keys).with(vapid_public_key, vapid_private_key).and_return(vapid_key)
-      expect(JWT).to receive(:encode).with(jwt_payload, vapid_key.curve, 'ES256').and_return('jwt.encoded.payload')
+      expect(JWT).to receive(:encode).with(jwt_payload, vapid_key.curve, 'ES256', jwt_header_fields).and_return('jwt.encoded.payload')
 
       request = build_request(vapid: vapid_options)
       headers = request.build_vapid_headers
