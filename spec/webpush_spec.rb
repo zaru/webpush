@@ -38,6 +38,18 @@ describe Webpush do
       expect { subject }.to raise_error(Webpush::TooManyRequests)
     end
 
+    it 'raises TemporaryServerError if the API returns a 502 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 502, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::TemporaryServerError)
+    end
+
+    it 'raises TemporaryServerError if the API returns a 503 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 503, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::TemporaryServerError)
+    end
+
     it 'raises ResponseError for unsuccessful status code by default' do
       stub_request(:post, expected_endpoint).
         to_return(status: 401, body: "", headers: {})

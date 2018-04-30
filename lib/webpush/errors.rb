@@ -20,4 +20,6 @@ module Webpush
   class PayloadTooLarge < ResponseError; end
 
   class TooManyRequests < ResponseError; end
+
+  class TemporaryServerError < ResponseError; end
 end

@@ -31,6 +31,8 @@ module Webpush
         raise PayloadTooLarge.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPTooManyRequests) # 429, try again later!
         raise TooManyRequests.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPBadGateway) || resp.is_a?(Net::HTTPServiceUnavailable) # 502, 503
+        raise TemporaryServerError.new(resp, uri.host)
       elsif !resp.is_a?(Net::HTTPSuccess)  # unknown/unhandled response error
         raise ResponseError.new(resp, uri.host)
       end
