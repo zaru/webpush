@@ -9,6 +9,7 @@ require 'webpush/errors'
 require 'webpush/vapid_key'
 require 'webpush/encryption'
 require 'webpush/request'
+require 'webpush/railtie' if defined?(Rails)
 
 module Webpush
   class << self
