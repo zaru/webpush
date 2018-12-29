@@ -6,6 +6,7 @@ describe Webpush::Request do
 
     it { expect(request.headers['Content-Type']).to eq('application/octet-stream') }
     it { expect(request.headers['Ttl']).to eq('2419200') }
+    it { expect(request.headers['Urgency']).to eq('normal') }
 
     describe 'from :message' do
       it 'inserts encryption headers for valid payload' do
@@ -29,6 +30,14 @@ describe Webpush::Request do
         request = build_request(ttl: 60 * 5)
 
         expect(request.headers['Ttl']).to eq('300')
+      end
+    end
+
+    describe 'from :urgency' do
+      it 'can override Urgency with :urgency option' do
+        request = build_request(urgency: 'high', vapid: vapid_options)
+
+        expect(request.headers['Urgency']).to eq('high')
       end
     end
   end

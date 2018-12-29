@@ -46,6 +46,7 @@ module Webpush
       headers = {}
       headers["Content-Type"] = "application/octet-stream"
       headers["Ttl"]          = ttl
+      headers["Urgency"]      = urgency
 
       if @payload.has_key?(:server_public_key)
         headers["Content-Encoding"] = "aesgcm"
@@ -87,6 +88,10 @@ module Webpush
 
     def ttl
       @options.fetch(:ttl).to_s
+    end
+
+    def urgency
+      @options.fetch(:urgency).to_s
     end
 
     def dh_param
@@ -131,7 +136,8 @@ module Webpush
 
     def default_options
       {
-        ttl: 60*60*24*7*4 # 4 weeks
+        ttl: 60*60*24*7*4, # 4 weeks
+        urgency: 'normal'
       }
     end
 

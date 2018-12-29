@@ -247,7 +247,8 @@ Webpush.payload_send(
   message: JSON.generate(message),
   p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
   auth: "aW1hcmthcmFpa3V6ZQ==",
-  ttl: 600 #optional, ttl in seconds, defaults to 2419200 (4 weeks),
+  ttl: 600, # optional, ttl in seconds, defaults to 2419200 (4 weeks)
+  urgency: 'normal' # optional, it can be very-low, low, normal, high, defaults to normal
 )
 ```
 
