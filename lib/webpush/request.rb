@@ -26,15 +26,19 @@ module Webpush
       req.body = body
       resp = http.request(req)
 
-      if resp.is_a?(Net::HTTPGone) ||   #Firefox unsubscribed response
-          (resp.is_a?(Net::HTTPBadRequest) && resp.message == "UnauthorizedRegistration")  #Chrome unsubscribed response
-        raise InvalidSubscription.new(resp, uri.host)
-      elsif resp.is_a?(Net::HTTPNotFound) # 404
+      if resp.is_a?(Net::HTTPGone) # 410
         raise ExpiredSubscription.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPNotFound) # 404
+        raise InvalidSubscription.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPUnauthorized) || # 401, Mozilla autopush
+        resp.is_a?(Net::HTTPBadRequest) && resp.message == "UnauthorizedRegistration" # 400, Google FCM
+        raise Unauthorized.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPRequestEntityTooLarge) # 413
         raise PayloadTooLarge.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPTooManyRequests) # 429, try again later!
         raise TooManyRequests.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPServerError) # 5xx
+        raise PushServiceError.new(resp, uri.host)
       elsif !resp.is_a?(Net::HTTPSuccess)  # unknown/unhandled response error
         raise ResponseError.new(resp, uri.host)
       end
