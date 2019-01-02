@@ -1,8 +1,7 @@
 # Change Log
 
-## [Unreleased](https://github.com/zaru/webpush/tree/HEAD)
-
-[Full Changelog](https://github.com/zaru/webpush/compare/v0.3.4...HEAD)
+## [v0.3.5](https://github.com/zaru/webpush/tree/v0.3.5) (2019-01-02)
+[Full Changelog](https://github.com/zaru/webpush/compare/v0.3.4...v0.3.5)
 
 **Merged pull requests:**
 
