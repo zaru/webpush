@@ -6,24 +6,26 @@ describe Webpush do
   end
 
   shared_examples 'web push protocol standard error handling' do
-    it 'raises InvalidSubscription if and only if the combination of status code and message indicate an invalid subscription' do
+    it 'raises InvalidSubscription if the API returns a 404 Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 404, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::InvalidSubscription)
+    end
+
+    it 'raises ExpiredSubscription if the API returns a 410 Error' do
       stub_request(:post, expected_endpoint).
           to_return(status: 410, body: "", headers: {})
-      expect { subject }.to raise_error(Webpush::InvalidSubscription)
+      expect { subject }.to raise_error(Webpush::ExpiredSubscription)
+    end
+
+    it 'raises Unauthorized if the API returns a 401 Error or 400 with specific message' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 401, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::Unauthorized)
 
       stub_request(:post, expected_endpoint).
           to_return(status: [400, "UnauthorizedRegistration"], body: "", headers: {})
-      expect { subject }.to raise_error(Webpush::InvalidSubscription)
-
-      stub_request(:post, expected_endpoint).
-          to_return(status: 400, body: "", headers: {})
-      expect { subject }.not_to raise_error(Webpush::InvalidSubscription)
-    end
-
-    it 'raises ExpiredSubscription if the API returns a 404 Error' do
-      stub_request(:post, expected_endpoint).
-          to_return(status: 404, body: "", headers: {})
-      expect { subject }.to raise_error(Webpush::ExpiredSubscription)
+      expect { subject }.to raise_error(Webpush::Unauthorized)
     end
 
     it 'raises PayloadTooLarge if the API returns a 413 Error' do
@@ -36,6 +38,16 @@ describe Webpush do
       stub_request(:post, expected_endpoint).
           to_return(status: 429, body: "", headers: {})
       expect { subject }.to raise_error(Webpush::TooManyRequests)
+    end
+
+    it 'raises PushServiceError if the API returns a 5xx Error' do
+      stub_request(:post, expected_endpoint).
+          to_return(status: 500, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::PushServiceError)
+
+      stub_request(:post, expected_endpoint).
+          to_return(status: 503, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::PushServiceError)
     end
 
     it 'raises ResponseError for unsuccessful status code by default' do

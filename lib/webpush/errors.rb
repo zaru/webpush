@@ -17,7 +17,12 @@ module Webpush
 
   class ExpiredSubscription < ResponseError; end
 
+  class Unauthorized < ResponseError; end
+
   class PayloadTooLarge < ResponseError; end
 
   class TooManyRequests < ResponseError; end
+
+  class PushServiceError < ResponseError; end
+
 end
