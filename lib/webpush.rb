@@ -26,6 +26,7 @@ module Webpush
     # @option vapid [String] :private_key the VAPID private key
     # @param options [Hash<Symbol,String>] additional options for the notification
     # @option options [#to_s] :ttl Time-to-live in seconds
+    # @option options [#to_s] :urgency Urgency can be very-low, low, normal, high
     def payload_send(message: "", endpoint:, p256dh: "", auth: "", vapid: {}, **options)
       subscription = {
         endpoint: endpoint,

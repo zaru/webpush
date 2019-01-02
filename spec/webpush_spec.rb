@@ -107,6 +107,7 @@ describe Webpush do
         'Crypto-Key'=>'dh=BAgtUks5d90kFmxGevk9tH7GEmvz9DB0qcEMUsOBgKwMf-TMjsKIIG6LQvGcFAf6jcmAod15VVwmYwGIIxE4VWE',
         'Encryption'=>'salt=WJeVM-RY-F9351SVxTFx_g',
         'Ttl'=>'2419200',
+        'Urgency'=>'normal',
         'User-Agent'=>'Ruby'
       }
     end
@@ -220,6 +221,7 @@ describe Webpush do
         'Crypto-Key'=>'dh=BAgtUks5d90kFmxGevk9tH7GEmvz9DB0qcEMUsOBgKwMf-TMjsKIIG6LQvGcFAf6jcmAod15VVwmYwGIIxE4VWE',
         'Encryption'=>'salt=WJeVM-RY-F9351SVxTFx_g',
         'Ttl'=>'2419200',
+        'Urgency'=>'normal',
         'User-Agent'=>'Ruby'
       }
     end
