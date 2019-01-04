@@ -18,9 +18,13 @@ describe Webpush do
       expect { subject }.to raise_error(Webpush::ExpiredSubscription)
     end
 
-    it 'raises Unauthorized if the API returns a 401 Error or 400 with specific message' do
+    it 'raises Unauthorized if the API returns a 401 Error, a 403 Error or 400 with specific message' do
       stub_request(:post, expected_endpoint).
           to_return(status: 401, body: "", headers: {})
+      expect { subject }.to raise_error(Webpush::Unauthorized)
+
+      stub_request(:post, expected_endpoint).
+          to_return(status: 403, body: "", headers: {})
       expect { subject }.to raise_error(Webpush::Unauthorized)
 
       stub_request(:post, expected_endpoint).
