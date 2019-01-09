@@ -88,7 +88,7 @@ describe Webpush do
     it 'raises exception on error by default' do
       stub_request(:post, expected_endpoint).to_raise(StandardError)
 
-      expect { subject }.to raise_error
+      expect { subject }.to raise_error(StandardError)
     end
   end
 
