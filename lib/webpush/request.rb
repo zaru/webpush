@@ -30,7 +30,7 @@ module Webpush
         raise ExpiredSubscription.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPNotFound) # 404
         raise InvalidSubscription.new(resp, uri.host)
-      elsif resp.is_a?(Net::HTTPUnauthorized) || # 401, Mozilla autopush
+      elsif resp.is_a?(Net::HTTPUnauthorized) || resp.is_a?(Net::HTTPForbidden) || # 401, 403
         resp.is_a?(Net::HTTPBadRequest) && resp.message == "UnauthorizedRegistration" # 400, Google FCM
         raise Unauthorized.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPRequestEntityTooLarge) # 413
