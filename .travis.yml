@@ -4,7 +4,13 @@ rvm:
   - 2.3
   - 2.4
   - 2.5
-before_install: gem install bundler
+  - 2.6
+before_install:
+  - |
+    if [[ ${RUBY_VERSION} =~ ^ruby-2.3 ]]; then
+      gem uninstall -i /home/travis/.rvm/gems/${RUBY_VERSION}@global bundler -x
+    fi
+  - gem install bundler -v 1.17.3
 script: "bundle exec rake spec"
 addons:
   code_climate:
