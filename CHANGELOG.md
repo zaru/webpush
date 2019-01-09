@@ -1,5 +1,14 @@
 # Change Log
 
+## [v0.3.6](https://github.com/zaru/webpush/tree/v0.3.6) (2019-01-09)
+[Full Changelog](https://github.com/zaru/webpush/compare/v0.3.5...v0.3.6)
+
+**Merged pull requests:**
+
+- Added a error class to arguments of raise\_error [\#62](https://github.com/zaru/webpush/pull/62) ([zaru](https://github.com/zaru))
+- Fix TravisCI bundler version [\#61](https://github.com/zaru/webpush/pull/61) ([zaru](https://github.com/zaru))
+- Raise Webpush::Unauthorized on HTTP 403 [\#59](https://github.com/zaru/webpush/pull/59) ([collimarco](https://github.com/collimarco))
+
 ## [v0.3.5](https://github.com/zaru/webpush/tree/v0.3.5) (2019-01-02)
 [Full Changelog](https://github.com/zaru/webpush/compare/v0.3.4...v0.3.5)
 
