@@ -166,7 +166,8 @@ post "/push" do
     vapid: {
       subject: "mailto:sender@example.com",
       public_key: ENV['VAPID_PUBLIC_KEY'],
-      private_key: ENV['VAPID_PRIVATE_KEY']
+      private_key: ENV['VAPID_PRIVATE_KEY'],
+      expiration: 79200  # 2 hours
     },
     ssl_timeout: 5, # value for Net::HTTP#ssl_timeout=, optional
     open_timeout: 5, # value for Net::HTTP#open_timeout=, optional
@@ -276,7 +277,8 @@ Webpush.payload_send(
   vapid: {
     subject: "mailto:sender@example.com"
     public_key: ENV['VAPID_PUBLIC_KEY'],
-    private_key: ENV['VAPID_PRIVATE_KEY']
+    private_key: ENV['VAPID_PRIVATE_KEY'],
+    expiration: 79200  # 2 hours
   }
 )
 ```
