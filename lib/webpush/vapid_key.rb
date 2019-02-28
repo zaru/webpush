@@ -14,6 +14,18 @@ module Webpush
       key
     end
 
+    # Create a VapidKey instance from pem encoded elliptic curve public and private keys
+    #
+    # @return [Webpush::VapidKey] a VapidKey instance for the given public and private keys
+    def self.from_pem(pem)
+      key = new
+      src = OpenSSL::PKey.read pem
+      key.curve.public_key = src.public_key
+      key.curve.private_key = src.private_key
+
+      key
+    end
+
     attr_reader :curve
 
     def initialize
@@ -62,6 +74,13 @@ module Webpush
       { public_key: public_key, private_key: private_key }
     end
     alias to_hash to_h
+
+    def to_pem
+      public_key = OpenSSL::PKey::EC.new curve
+      public_key.private_key = nil
+      
+      curve.to_pem + public_key.to_pem
+    end
 
     def inspect
       "#<#{self.class}:#{object_id.to_s(16)} #{to_h.map { |k, v| ":#{k}=#{v}" }.join(" ")}>"
