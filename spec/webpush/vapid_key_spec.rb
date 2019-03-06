@@ -35,6 +35,21 @@ describe Webpush::VapidKey do
     expect(hash[:private_key]).to eq(key.private_key)
   end
 
+  it "returns pem of public and private keys" do
+    key = Webpush::VapidKey.new
+    pem = key.to_pem
+
+    expect(pem).to include('-----BEGIN EC PRIVATE KEY-----')
+    expect(pem).to include('-----BEGIN PUBLIC KEY-----')
+  end
+
+  it "imports pem of public and private keys" do
+    pem = Webpush::VapidKey.new.to_pem
+    key = Webpush::VapidKey.from_pem pem
+    
+    expect(key.to_pem).to eq(pem)
+  end
+
   describe "self.from_keys" do
     it "returns an encoded public key" do
       key = Webpush::VapidKey.from_keys(vapid_public_key, vapid_private_key)

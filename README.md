@@ -45,6 +45,9 @@ vapid_key = Webpush.generate_key
 # Save these in your application server settings
 vapid_key.public_key
 vapid_key.private_key
+
+# Or you can save in PEM format if you prefer
+vapid_key.to_pem
 ```
 
 ### Declaring manifest.json
@@ -277,6 +280,23 @@ Webpush.payload_send(
     subject: "mailto:sender@example.com"
     public_key: ENV['VAPID_PUBLIC_KEY'],
     private_key: ENV['VAPID_PRIVATE_KEY']
+  }
+)
+```
+
+### With VAPID in PEM format
+
+This library also supports the PEM format for the VAPID keys:
+
+```ruby
+Webpush.payload_send(
+  endpoint: "https://fcm.googleapis.com/gcm/send/eah7hak....",
+  message: "A message",
+  p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
+  auth: "aW1hcmthcmFpa3V6ZQ==",
+  vapid: {
+    subject: "mailto:sender@example.com"
+    pem: ENV['VAPID_KEYS']
   }
 )
 ```

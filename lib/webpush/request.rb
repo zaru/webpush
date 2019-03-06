@@ -70,7 +70,7 @@ module Webpush
     end
 
     def build_vapid_headers
-      vapid_key = VapidKey.from_keys(vapid_public_key, vapid_private_key)
+      vapid_key = vapid_pem ? VapidKey.from_pem(vapid_pem) : VapidKey.from_keys(vapid_public_key, vapid_private_key)
       jwt = JWT.encode(jwt_payload, vapid_key.curve, 'ES256', jwt_header_fields)
       p256ecdsa = vapid_key.public_key_for_push_header
 
@@ -136,6 +136,10 @@ module Webpush
 
     def vapid_private_key
       @vapid_options.fetch(:private_key, nil)
+    end
+
+    def vapid_pem
+      @vapid_options.fetch(:pem, nil)
     end
 
     def default_options

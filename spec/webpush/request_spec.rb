@@ -69,6 +69,13 @@ describe Webpush::Request do
       expect(headers['Authorization']).to eq('WebPush jwt.encoded.payload')
       expect(headers['Crypto-Key']).to eq('p256ecdsa=' + vapid_public_key.delete('='))
     end
+
+    it 'supports PEM format' do
+      pem = Webpush::VapidKey.new.to_pem
+      expect(Webpush::VapidKey).to receive(:from_pem).with(pem).and_call_original
+      request = build_request(vapid: { subject: "mailto:sender@example.com", pem: pem })
+      request.build_vapid_headers
+    end
   end
 
   describe '#body' do
