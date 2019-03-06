@@ -1,5 +1,12 @@
 # Change Log
 
+## [v0.3.7](https://github.com/zaru/webpush/tree/v0.3.7) (2019-03-06)
+[Full Changelog](https://github.com/zaru/webpush/compare/v0.3.6...v0.3.7)
+
+**Merged pull requests:**
+
+- Add PEM support to import / export keys [\#65](https://github.com/zaru/webpush/pull/65) ([collimarco](https://github.com/collimarco))
+
 ## [v0.3.6](https://github.com/zaru/webpush/tree/v0.3.6) (2019-01-09)
 [Full Changelog](https://github.com/zaru/webpush/compare/v0.3.5...v0.3.6)
 
