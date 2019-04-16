@@ -19,6 +19,51 @@ describe Webpush::Request do
       end
     end
 
+    describe 'from :api_key' do
+      def build_request_with_api_key(endpoint, options = {})
+        subscription = {
+          endpoint: endpoint,
+          keys: {
+            p256dh: 'p256dh',
+            auth: 'auth'
+          }
+        }
+        request = Webpush::Request.new(message: "", subscription: subscription, vapid: {}, **options)
+      end
+
+      it 'inserts Authorization header when api_key present, and endpoint is for Chrome\'s non-standards-compliant GCM endpoints' do
+        request = build_request_with_api_key('https://gcm-http.googleapis.com/gcm/xyz', api_key: "api_key")
+
+        expect(request.headers['Authorization']).to eq("key=api_key")
+      end
+
+      it 'does not insert Authorization header for Chrome\'s new standards-compliant endpoints, even if api_key is present' do
+        request = build_request_with_api_key('https://fcm.googleapis.com/fcm/send/ABCD1234', api_key: "api_key")
+
+        expect(request.headers['Authorization']).to be_nil
+      end
+
+      it 'does not insert Authorization header when endpoint is not for Chrome, even if api_key is present' do
+        request = build_request_with_api_key('https://some.random.endpoint.com/xyz', api_key: "api_key")
+
+        expect(request.headers['Authorization']).to be_nil
+      end
+
+      it 'does not insert Authorization header when api_key blank' do
+        request = build_request_with_api_key("endpoint", api_key: nil)
+
+        expect(request.headers['Authorization']).to be_nil
+
+        request = build_request_with_api_key("endpoint", api_key: "")
+
+        expect(request.headers['Authorization']).to be_nil
+
+        request = build_request_with_api_key("endpoint")
+
+        expect(request.headers['Authorization']).to be_nil
+      end
+    end
+
     describe 'from :ttl' do
       it 'can override Ttl with :ttl option with string' do
         request = build_request(ttl: '300', vapid: vapid_options)

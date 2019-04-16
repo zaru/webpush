@@ -59,7 +59,7 @@ module Webpush
       end
 
       if api_key?
-        headers["Authorization"] = api_key
+        headers["Authorization"] = "key=#{api_key}"
       elsif vapid?
         vapid_headers = build_vapid_headers
         headers["Authorization"] = vapid_headers["Authorization"]
