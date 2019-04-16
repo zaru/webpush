@@ -7,7 +7,7 @@ rvm:
   - 2.6
 before_install:
   - |
-    if [[ ${RUBY_VERSION} =~ ^ruby-2.3 ]]; then
+    if [[ ${RUBY_VERSION} =~ ^ruby-2.5 ]]; then
       gem uninstall -i /home/travis/.rvm/gems/${RUBY_VERSION}@global bundler -x
     fi
   - gem install bundler -v 1.17.3
