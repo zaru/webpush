@@ -1,5 +1,12 @@
 # Change Log
 
+## [v0.3.8](https://github.com/zaru/webpush/tree/v0.3.8) (2019-04-16)
+[Full Changelog](https://github.com/zaru/webpush/compare/v0.3.7...v0.3.8)
+
+**Merged pull requests:**
+
+- Fix authorization header [\#72](https://github.com/zaru/webpush/pull/72) ([xronos-i-am](https://github.com/xronos-i-am))
+
 ## [v0.3.7](https://github.com/zaru/webpush/tree/v0.3.7) (2019-03-06)
 [Full Changelog](https://github.com/zaru/webpush/compare/v0.3.6...v0.3.7)
 
