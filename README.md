@@ -1,6 +1,7 @@
 # WebPush
 
 [![Code Climate](https://codeclimate.com/github/zaru/webpush/badges/gpa.svg)](https://codeclimate.com/github/zaru/webpush)
+[![Test Coverage](https://codeclimate.com/github/zaru/webpush/badges/coverage.svg)](https://codeclimate.com/github/zaru/webpush/coverage)
 [![Build Status](https://travis-ci.org/zaru/webpush.svg?branch=master)](https://travis-ci.org/zaru/webpush)
 [![Gem Version](https://badge.fury.io/rb/webpush.svg)](https://badge.fury.io/rb/webpush)
 
