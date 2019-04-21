@@ -11,11 +11,11 @@ describe Webpush::Request do
     describe 'from :message' do
       it 'inserts encryption headers for valid payload' do
         allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted', server_public_key: 'server_public_key', salt: 'salt')
-        request = build_request(message: "Hello")
+        request = build_request(message: 'Hello')
 
-        expect(request.headers['Content-Encoding']).to eq("aesgcm")
-        expect(request.headers['Encryption']).to eq("salt=c2FsdA")
-        expect(request.headers['Crypto-Key']).to eq("dh=c2VydmVyX3B1YmxpY19rZXk;p256ecdsa="+vapid_options[:public_key].delete('='))
+        expect(request.headers['Content-Encoding']).to eq('aesgcm')
+        expect(request.headers['Encryption']).to eq('salt=c2FsdA')
+        expect(request.headers['Crypto-Key']).to eq('dh=c2VydmVyX3B1YmxpY19rZXk;p256ecdsa=' + vapid_options[:public_key].delete('='))
       end
     end
 
@@ -28,37 +28,37 @@ describe Webpush::Request do
             auth: 'auth'
           }
         }
-        request = Webpush::Request.new(message: "", subscription: subscription, vapid: {}, **options)
+        Webpush::Request.new(message: '', subscription: subscription, vapid: {}, **options)
       end
 
       it 'inserts Authorization header when api_key present, and endpoint is for Chrome\'s non-standards-compliant GCM endpoints' do
-        request = build_request_with_api_key('https://gcm-http.googleapis.com/gcm/xyz', api_key: "api_key")
+        request = build_request_with_api_key('https://gcm-http.googleapis.com/gcm/xyz', api_key: 'api_key')
 
-        expect(request.headers['Authorization']).to eq("key=api_key")
+        expect(request.headers['Authorization']).to eq('key=api_key')
       end
 
       it 'does not insert Authorization header for Chrome\'s new standards-compliant endpoints, even if api_key is present' do
-        request = build_request_with_api_key('https://fcm.googleapis.com/fcm/send/ABCD1234', api_key: "api_key")
+        request = build_request_with_api_key('https://fcm.googleapis.com/fcm/send/ABCD1234', api_key: 'api_key')
 
         expect(request.headers['Authorization']).to be_nil
       end
 
       it 'does not insert Authorization header when endpoint is not for Chrome, even if api_key is present' do
-        request = build_request_with_api_key('https://some.random.endpoint.com/xyz', api_key: "api_key")
+        request = build_request_with_api_key('https://some.random.endpoint.com/xyz', api_key: 'api_key')
 
         expect(request.headers['Authorization']).to be_nil
       end
 
       it 'does not insert Authorization header when api_key blank' do
-        request = build_request_with_api_key("endpoint", api_key: nil)
+        request = build_request_with_api_key('endpoint', api_key: nil)
 
         expect(request.headers['Authorization']).to be_nil
 
-        request = build_request_with_api_key("endpoint", api_key: "")
+        request = build_request_with_api_key('endpoint', api_key: '')
 
         expect(request.headers['Authorization']).to be_nil
 
-        request = build_request_with_api_key("endpoint")
+        request = build_request_with_api_key('endpoint')
 
         expect(request.headers['Authorization']).to be_nil
       end
@@ -89,11 +89,11 @@ describe Webpush::Request do
 
   describe '#build_vapid_headers' do
     it 'returns hash of VAPID headers' do
-      time = Time.at(1476150897)
+      time = Time.at(1_476_150_897)
       jwt_payload = {
         aud: 'https://fcm.googleapis.com',
         exp: time.to_i + 24 * 60 * 60,
-        sub: 'mailto:sender@example.com',
+        sub: 'mailto:sender@example.com'
       }
       jwt_header_fields = { 'typ' => 'JWT' }
 
@@ -118,7 +118,7 @@ describe Webpush::Request do
     it 'supports PEM format' do
       pem = Webpush::VapidKey.new.to_pem
       expect(Webpush::VapidKey).to receive(:from_pem).with(pem).and_call_original
-      request = build_request(vapid: { subject: "mailto:sender@example.com", pem: pem })
+      request = build_request(vapid: { subject: 'mailto:sender@example.com', pem: pem })
       request.build_vapid_headers
     end
   end
@@ -153,7 +153,7 @@ describe Webpush::Request do
         auth: 'auth'
       }
     }
-    Webpush::Request.new(message: "", subscription: subscription, vapid: vapid_options, **options)
+    Webpush::Request.new(message: '', subscription: subscription, vapid: vapid_options, **options)
   end
 
   def endpoint

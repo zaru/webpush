@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Webpush
   # Class for abstracting the generation and encoding of elliptic curve public and private keys for use with the VAPID protocol
   #
@@ -78,12 +80,12 @@ module Webpush
     def to_pem
       public_key = OpenSSL::PKey::EC.new curve
       public_key.private_key = nil
-      
+
       curve.to_pem + public_key.to_pem
     end
 
     def inspect
-      "#<#{self.class}:#{object_id.to_s(16)} #{to_h.map { |k, v| ":#{k}=#{v}" }.join(" ")}>"
+      "#<#{self.class}:#{object_id.to_s(16)} #{to_h.map { |k, v| ":#{k}=#{v}" }.join(' ')}>"
     end
 
     private

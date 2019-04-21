@@ -1,9 +1,11 @@
+# frozen_string_literal: true
+
 module Webpush
   class Error < RuntimeError; end
 
   class ConfigurationError < Error; end
 
-  class ResponseError < Error;
+  class ResponseError < Error
     attr_reader :response, :host
 
     def initialize(response, host)
@@ -24,5 +26,4 @@ module Webpush
   class TooManyRequests < ResponseError; end
 
   class PushServiceError < ResponseError; end
-
 end

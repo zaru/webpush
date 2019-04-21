@@ -1,11 +1,14 @@
+# frozen_string_literal: true
+
 module Webpush
   module Encryption
     extend self
 
+    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def encrypt(message, p256dh, auth)
       assert_arguments(message, p256dh, auth)
 
-      group_name = "prime256v1"
+      group_name = 'prime256v1'
       salt = Random.new.bytes(16)
 
       server = OpenSSL::PKey::EC.new(group_name)
@@ -40,6 +43,7 @@ module Webpush
         shared_secret: shared_secret
       }
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     private
 
@@ -47,9 +51,9 @@ module Webpush
       c = convert16bit(client_public_key)
       s = convert16bit(server_public_key)
       context = "\0"
-      context += [c.bytesize].pack("n*")
+      context += [c.bytesize].pack('n*')
       context += c
-      context += [s.bytesize].pack("n*")
+      context += [s.bytesize].pack('n*')
       context += s
       context
     end
@@ -69,22 +73,22 @@ module Webpush
     end
 
     def create_info(type, context)
-      info = "Content-Encoding: "
+      info = 'Content-Encoding: '
       info += type
       info += "\0"
-      info += "P-256"
+      info += 'P-256'
       info += context
       info
     end
 
     def convert16bit(key)
-      [key.to_s(16)].pack("H*")
+      [key.to_s(16)].pack('H*')
     end
 
     def assert_arguments(message, p256dh, auth)
-      raise ArgumentError, "message cannot be blank" if blank?(message)
-      raise ArgumentError, "p256dh cannot be blank" if blank?(p256dh)
-      raise ArgumentError, "auth cannot be blank" if blank?(auth)
+      raise ArgumentError, 'message cannot be blank' if blank?(message)
+      raise ArgumentError, 'p256dh cannot be blank' if blank?(p256dh)
+      raise ArgumentError, 'auth cannot be blank' if blank?(auth)
     end
 
     def blank?(value)
