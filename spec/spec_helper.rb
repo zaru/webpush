@@ -2,7 +2,9 @@ $LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'pry'
 require 'webpush'
 require 'webmock/rspec'
+require 'simplecov'
 WebMock.disable_net_connect!(allow_localhost: true)
+SimpleCov.start
 
 def vapid_options
   {
