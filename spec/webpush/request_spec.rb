@@ -28,7 +28,7 @@ describe Webpush::Request do
             auth: 'auth'
           }
         }
-        request = Webpush::Request.new(message: '', subscription: subscription, vapid: {}, **options)
+        Webpush::Request.new(message: '', subscription: subscription, vapid: {}, **options)
       end
 
       it 'inserts Authorization header when api_key present, and endpoint is for Chrome\'s non-standards-compliant GCM endpoints' do

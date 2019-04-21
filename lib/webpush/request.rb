@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'jwt'
 require 'base64'
 
@@ -6,6 +8,7 @@ module Webpush
   GCM_URL = 'https://android.googleapis.com/gcm/send'.freeze
   TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'.freeze
 
+  # rubocop:disable Metrics/ClassLength
   class Request
     def initialize(message: '', subscription:, vapid:, **options)
       endpoint = subscription.fetch(:endpoint)
@@ -15,6 +18,7 @@ module Webpush
       @options = default_options.merge(options)
     end
 
+    # rubocop:disable Metrics/AbcSize
     def perform
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
@@ -25,27 +29,13 @@ module Webpush
       req = Net::HTTP::Post.new(uri.request_uri, headers)
       req.body = body
       resp = http.request(req)
-
-      if resp.is_a?(Net::HTTPGone) # 410
-        raise ExpiredSubscription.new(resp, uri.host)
-      elsif resp.is_a?(Net::HTTPNotFound) # 404
-        raise InvalidSubscription.new(resp, uri.host)
-      elsif resp.is_a?(Net::HTTPUnauthorized) || resp.is_a?(Net::HTTPForbidden) || # 401, 403
-            resp.is_a?(Net::HTTPBadRequest) && resp.message == 'UnauthorizedRegistration' # 400, Google FCM
-        raise Unauthorized.new(resp, uri.host)
-      elsif resp.is_a?(Net::HTTPRequestEntityTooLarge) # 413
-        raise PayloadTooLarge.new(resp, uri.host)
-      elsif resp.is_a?(Net::HTTPTooManyRequests) # 429, try again later!
-        raise TooManyRequests.new(resp, uri.host)
-      elsif resp.is_a?(Net::HTTPServerError) # 5xx
-        raise PushServiceError.new(resp, uri.host)
-      elsif !resp.is_a?(Net::HTTPSuccess) # unknown/unhandled response error
-        raise ResponseError.new(resp, uri.host)
-      end
+      verify_response(resp)
 
       resp
     end
+    # rubocop:enable Metrics/AbcSize
 
+    # rubocop:disable Metrics/MethodLength
     def headers
       headers = {}
       headers['Content-Type'] = 'application/octet-stream'
@@ -68,6 +58,7 @@ module Webpush
 
       headers
     end
+    # rubocop:enable Metrics/MethodLength
 
     def build_vapid_headers
       vapid_key = vapid_pem ? VapidKey.from_pem(vapid_pem) : VapidKey.from_keys(vapid_public_key, vapid_private_key)
@@ -174,5 +165,27 @@ module Webpush
     def trim_encode64(bin)
       Webpush.encode64(bin).delete('=')
     end
+
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/GuardClause
+    def verify_response(resp)
+      if resp.is_a?(Net::HTTPGone) # 410
+        raise ExpiredSubscription.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPNotFound) # 404
+        raise InvalidSubscription.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPUnauthorized) || resp.is_a?(Net::HTTPForbidden) || # 401, 403
+            resp.is_a?(Net::HTTPBadRequest) && resp.message == 'UnauthorizedRegistration' # 400, Google FCM
+        raise Unauthorized.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPRequestEntityTooLarge) # 413
+        raise PayloadTooLarge.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPTooManyRequests) # 429, try again later!
+        raise TooManyRequests.new(resp, uri.host)
+      elsif resp.is_a?(Net::HTTPServerError) # 5xx
+        raise PushServiceError.new(resp, uri.host)
+      elsif !resp.is_a?(Net::HTTPSuccess) # unknown/unhandled response error
+        raise ResponseError.new(resp, uri.host)
+      end
+    end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity, Style/GuardClause
   end
+  # rubocop:enable Metrics/ClassLength
 end

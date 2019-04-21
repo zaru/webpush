@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Webpush
   class Error < RuntimeError; end
 

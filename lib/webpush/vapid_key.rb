@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Webpush
   # Class for abstracting the generation and encoding of elliptic curve public and private keys for use with the VAPID protocol
   #
