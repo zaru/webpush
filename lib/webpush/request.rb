@@ -3,11 +3,11 @@ require 'base64'
 
 module Webpush
   # It is temporary URL until supported by the GCM server.
-  GCM_URL = 'https://android.googleapis.com/gcm/send'
-  TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'
+  GCM_URL = 'https://android.googleapis.com/gcm/send'.freeze
+  TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'.freeze
 
   class Request
-    def initialize(message: "", subscription:, vapid:, **options)
+    def initialize(message: '', subscription:, vapid:, **options)
       endpoint = subscription.fetch(:endpoint)
       @endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
       @payload = build_payload(message, subscription)
@@ -31,7 +31,7 @@ module Webpush
       elsif resp.is_a?(Net::HTTPNotFound) # 404
         raise InvalidSubscription.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPUnauthorized) || resp.is_a?(Net::HTTPForbidden) || # 401, 403
-        resp.is_a?(Net::HTTPBadRequest) && resp.message == "UnauthorizedRegistration" # 400, Google FCM
+            resp.is_a?(Net::HTTPBadRequest) && resp.message == 'UnauthorizedRegistration' # 400, Google FCM
         raise Unauthorized.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPRequestEntityTooLarge) # 413
         raise PayloadTooLarge.new(resp, uri.host)
@@ -39,7 +39,7 @@ module Webpush
         raise TooManyRequests.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPServerError) # 5xx
         raise PushServiceError.new(resp, uri.host)
-      elsif !resp.is_a?(Net::HTTPSuccess)  # unknown/unhandled response error
+      elsif !resp.is_a?(Net::HTTPSuccess) # unknown/unhandled response error
         raise ResponseError.new(resp, uri.host)
       end
 
@@ -48,22 +48,22 @@ module Webpush
 
     def headers
       headers = {}
-      headers["Content-Type"] = "application/octet-stream"
-      headers["Ttl"]          = ttl
-      headers["Urgency"]      = urgency
+      headers['Content-Type'] = 'application/octet-stream'
+      headers['Ttl']          = ttl
+      headers['Urgency']      = urgency
 
-      if @payload.has_key?(:server_public_key)
-        headers["Content-Encoding"] = "aesgcm"
-        headers["Encryption"] = "salt=#{salt_param}"
-        headers["Crypto-Key"] = "dh=#{dh_param}"
+      if @payload.key?(:server_public_key)
+        headers['Content-Encoding'] = 'aesgcm'
+        headers['Encryption'] = "salt=#{salt_param}"
+        headers['Crypto-Key'] = "dh=#{dh_param}"
       end
 
       if api_key?
-        headers["Authorization"] = "key=#{api_key}"
+        headers['Authorization'] = "key=#{api_key}"
       elsif vapid?
         vapid_headers = build_vapid_headers
-        headers["Authorization"] = vapid_headers["Authorization"]
-        headers["Crypto-Key"] = [ headers["Crypto-Key"], vapid_headers["Crypto-Key"] ].compact.join(";")
+        headers['Authorization'] = vapid_headers['Authorization']
+        headers['Crypto-Key'] = [headers['Crypto-Key'], vapid_headers['Crypto-Key']].compact.join(';')
       end
 
       headers
@@ -76,12 +76,12 @@ module Webpush
 
       {
         'Authorization' => 'WebPush ' + jwt,
-        'Crypto-Key' => 'p256ecdsa=' + p256ecdsa,
+        'Crypto-Key' => 'p256ecdsa=' + p256ecdsa
       }
     end
 
     def body
-      @payload.fetch(:ciphertext, "")
+      @payload.fetch(:ciphertext, '')
     end
 
     private
@@ -110,7 +110,7 @@ module Webpush
       {
         aud: audience,
         exp: Time.now.to_i + expiration,
-        sub: subject,
+        sub: subject
       }
     end
 
@@ -119,11 +119,11 @@ module Webpush
     end
 
     def audience
-      uri.scheme + "://" + uri.host
+      uri.scheme + '://' + uri.host
     end
 
     def expiration
-      @vapid_options.fetch(:expiration, 24*60*60)
+      @vapid_options.fetch(:expiration, 24 * 60 * 60)
     end
 
     def subject
@@ -144,7 +144,7 @@ module Webpush
 
     def default_options
       {
-        ttl: 60*60*24*7*4, # 4 weeks
+        ttl: 60 * 60 * 24 * 7 * 4, # 4 weeks
         urgency: 'normal'
       }
     end
@@ -164,7 +164,7 @@ module Webpush
     end
 
     def api_key?
-      !(api_key.nil? || api_key.empty?) && @endpoint =~ /\Ahttps:\/\/(android|gcm-http)\.googleapis\.com/
+      !(api_key.nil? || api_key.empty?) && @endpoint =~ %r{\Ahttps://(android|gcm-http)\.googleapis\.com}
     end
 
     def vapid?

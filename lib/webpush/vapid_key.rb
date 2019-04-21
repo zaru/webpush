@@ -78,12 +78,12 @@ module Webpush
     def to_pem
       public_key = OpenSSL::PKey::EC.new curve
       public_key.private_key = nil
-      
+
       curve.to_pem + public_key.to_pem
     end
 
     def inspect
-      "#<#{self.class}:#{object_id.to_s(16)} #{to_h.map { |k, v| ":#{k}=#{v}" }.join(" ")}>"
+      "#<#{self.class}:#{object_id.to_s(16)} #{to_h.map { |k, v| ":#{k}=#{v}" }.join(' ')}>"
     end
 
     private

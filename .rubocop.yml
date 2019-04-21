@@ -1,0 +1,8 @@
+require: rubocop-performance
+
+AllCops:
+  Exclude:
+    - 'bin/**/*'
+
+Metrics/LineLength:
+  Enabled: false

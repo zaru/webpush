@@ -28,7 +28,7 @@ module Webpush
     # @param options [Hash<Symbol,String>] additional options for the notification
     # @option options [#to_s] :ttl Time-to-live in seconds
     # @option options [#to_s] :urgency Urgency can be very-low, low, normal, high
-    def payload_send(message: "", endpoint:, p256dh: "", auth: "", vapid: {}, **options)
+    def payload_send(message: '', endpoint:, p256dh: '', auth: '', vapid: {}, **options)
       subscription = {
         endpoint: endpoint,
         keys: {
@@ -59,9 +59,7 @@ module Webpush
     def decode64(str)
       # For Ruby < 2.3, Base64.urlsafe_decode64 strict decodes and will raise errors if encoded value is not properly padded
       # Implementation: http://ruby-doc.org/stdlib-2.3.0/libdoc/base64/rdoc/Base64.html#method-i-urlsafe_decode64
-      if !str.end_with?("=") && str.length % 4 != 0
-        str = str.ljust((str.length + 3) & ~3, "=")
-      end
+      str = str.ljust((str.length + 3) & ~3, '=') if !str.end_with?('=') && str.length % 4 != 0
 
       Base64.urlsafe_decode64(str)
     end
