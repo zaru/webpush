@@ -6,7 +6,7 @@ module Webpush
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def encrypt(message, p256dh, auth)
-      assert_arguments(message, p256dh, auth)
+      assert_arguments(message, p256dh, auth, version=:aesgcm)
 
       group_name = 'prime256v1'
       salt = Random.new.bytes(16)
@@ -22,18 +22,24 @@ module Webpush
       shared_secret = server.dh_compute_key(client_public_key)
 
       client_auth_token = Webpush.decode64(auth)
+      
+      if version == :aes128gcm
+        info =  "WebPush: info\0" + convert16bit(client_public_key_bn) + convert16bit(server_public_key_bn)
+        keyinfo = "Content-Encoding: aes128gcm\0"
+        nonce_info = "Content-Encoding: nonce\0"
+      else # aesgcm
+        info = "Content-Encoding: auth\0"
+        context = create_context_aesgcm(client_public_key_bn, server_public_key_bn)
+        keyinfo = create_info('aesgcm', context)
+        nonce_info = create_info('nonce', context)
+      end      
 
-      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: "Content-Encoding: auth\0").next_bytes(32)
+      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: info).next_bytes(32)
 
-      context = create_context(client_public_key_bn, server_public_key_bn)
-
-      content_encryption_key_info = create_info('aesgcm', context)
-      content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).next_bytes(16)
-
-      nonce_info = create_info('nonce', context)
+      content_encryption_key = HKDF.new(prk, salt: salt, info: keyinfo).next_bytes(16)
       nonce = HKDF.new(prk, salt: salt, info: nonce_info).next_bytes(12)
 
-      ciphertext = encrypt_payload(message, content_encryption_key, nonce)
+      ciphertext = encrypt_payload(message, content_encryption_key, nonce, version)
 
       {
         ciphertext: ciphertext,
@@ -47,7 +53,7 @@ module Webpush
 
     private
 
-    def create_context(client_public_key, server_public_key)
+    def create_context_aesgcm(client_public_key, server_public_key)
       c = convert16bit(client_public_key)
       s = convert16bit(server_public_key)
       context = "\0"
@@ -58,15 +64,20 @@ module Webpush
       context
     end
 
-    def encrypt_payload(plaintext, content_encryption_key, nonce)
+    def encrypt_payload(plaintext, content_encryption_key, nonce, version)
       cipher = OpenSSL::Cipher.new('aes-128-gcm')
       cipher.encrypt
       cipher.key = content_encryption_key
       cipher.iv = nonce
-      padding = cipher.update("\0\0")
-      text = cipher.update(plaintext)
-
-      e_text = padding + text + cipher.final
+      if version == :aesgcm
+        padding = cipher.update("\0\0") 
+        text = cipher.update(plaintext)
+        e_text = padding + text + cipher.final
+      elsif version == :aes128gcm
+        text = cipher.update(plaintext)
+        padding = cipher.update("\2\0")
+        e_text = text + padding + cipher.final
+      end
       e_tag = cipher.auth_tag
 
       e_text + e_tag
