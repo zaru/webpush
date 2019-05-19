@@ -5,8 +5,8 @@ module Webpush
     extend self
 
     # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-    def encrypt(message, p256dh, auth)
-      assert_arguments(message, p256dh, auth, version=:aesgcm)
+    def encrypt(message, p256dh, auth, version=:aesgcm)
+      assert_arguments(message, p256dh, auth)
 
       group_name = 'prime256v1'
       salt = Random.new.bytes(16)
