@@ -6,7 +6,7 @@ require 'base64'
 module Webpush
   # It is temporary URL until supported by the GCM server.
   GCM_URL = 'https://android.googleapis.com/gcm/send'.freeze
-  TEMP_GCM_URL = 'https://gcm-http.googleapis.com/gcm'.freeze
+  TEMP_GCM_URL = 'https://fcm.googleapis.com/fcm/'.freeze
 
   # rubocop:disable Metrics/ClassLength
   class Request
@@ -155,7 +155,7 @@ module Webpush
     end
 
     def api_key?
-      !(api_key.nil? || api_key.empty?) && @endpoint =~ %r{\Ahttps://(android|gcm-http)\.googleapis\.com}
+      !(api_key.nil? || api_key.empty?) && @endpoint =~ %r{\Ahttps://(android|gcm-http|fcm)\.googleapis\.com}
     end
 
     def vapid?
