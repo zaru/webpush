@@ -208,7 +208,7 @@ describe Webpush do
 
   context 'chrome GCM endpoint: request headers with GCM api key' do
     let(:endpoint) { 'https://android.googleapis.com/gcm/send/subscription-id' }
-    let(:expected_endpoint) { 'https://gcm-http.googleapis.com/gcm/subscription-id' }
+    let(:expected_endpoint) { 'https://fcm.googleapis.com/fcm/subscription-id' }
 
     let(:message) { JSON.generate(body: 'body') }
     let(:p256dh) { 'BN4GvZtEZiZuqFxSKVZfSfluwKBD7UxHNBmWkfiZfCtgDE8Bwh-_MtLXbBxTBAWH9r7IPKL0lhdcaqtL1dfxU5E=' }

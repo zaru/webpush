@@ -37,10 +37,10 @@ describe Webpush::Request do
         expect(request.headers['Authorization']).to eq('key=api_key')
       end
 
-      it 'does not insert Authorization header for Chrome\'s new standards-compliant endpoints, even if api_key is present' do
+      it 'insert Authorization header for Chrome\'s new standards-compliant endpoints, even if api_key is present' do
         request = build_request_with_api_key('https://fcm.googleapis.com/fcm/send/ABCD1234', api_key: 'api_key')
 
-        expect(request.headers['Authorization']).to be_nil
+        expect(request.headers['Authorization']).to eq('key=api_key')
       end
 
       it 'does not insert Authorization header when endpoint is not for Chrome, even if api_key is present' do
