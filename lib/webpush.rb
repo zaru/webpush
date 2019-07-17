@@ -4,6 +4,7 @@ require 'openssl'
 require 'base64'
 require 'hkdf'
 require 'net/http'
+require 'resolv-replace'
 require 'json'
 
 require 'webpush/version'
