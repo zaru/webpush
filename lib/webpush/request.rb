@@ -44,6 +44,7 @@ module Webpush
 
       if @payload.key?(:server_public_key)
         headers['Content-Encoding'] = 'aes128gcm'
+        headers['Crypto-Key'] = "dh=#{dh_param}"
       end
 
       if api_key?
@@ -51,6 +52,7 @@ module Webpush
       elsif vapid?
         vapid_headers = build_vapid_headers
         headers['Authorization'] = vapid_headers['Authorization']
+        headers['Crypto-Key'] = [headers['Crypto-Key'], vapid_headers['Crypto-Key']].compact.join(';')
       end
 
       headers
@@ -64,6 +66,7 @@ module Webpush
 
       {
         'Authorization' => 'WebPush ' + jwt,
+        'Crypto-Key' => 'p256ecdsa=' + p256ecdsa
       }
     end
 
