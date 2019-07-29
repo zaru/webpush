@@ -61,15 +61,6 @@ module Webpush
       e_text + e_tag
     end
 
-    def create_info(type, context)
-      info = 'Content-Encoding: '
-      info += type
-      info += "\0"
-      info += 'P-256'
-      info += context
-      info
-    end
-
     def convert16bit(key)
       [key.to_s(16)].pack('H*')
     end
