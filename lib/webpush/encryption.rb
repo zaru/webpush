@@ -23,23 +23,31 @@ module Webpush
 
       client_auth_token = Webpush.decode64(auth)
 
-      info =  "WebPush: info\0" + convert16bit(client_public_key_bn) + convert16bit(server_public_key_bn)
-      keyinfo = "Content-Encoding: aes128gcm\0"
+      info = "WebPush: info\0" + client_public_key_bn.to_s(2) + server_public_key_bn.to_s(2)
+      content_encryption_key_info = "Content-Encoding: aes128gcm\0"
       nonce_info = "Content-Encoding: nonce\0"
 
       prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: info).next_bytes(32)
 
-      content_encryption_key = HKDF.new(prk, salt: salt, info: keyinfo).next_bytes(16)
+      content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).next_bytes(16)
+
       nonce = HKDF.new(prk, salt: salt, info: nonce_info).next_bytes(12)
 
       ciphertext = encrypt_payload(message, content_encryption_key, nonce)
 
+      serverkey16bn = convert16bit(server_public_key_bn)
+      rs = ciphertext.bytesize
+      raise ArgumentError, "encrypted payload is too big" if rs > 4096
+
+      aes128gcmheader = "#{salt}" + [rs].pack('N*') + [65].pack('c*') + serverkey16bn
+      ciphertext_with_header = aes128gcmheader + ciphertext
+
       {
-          ciphertext: ciphertext,
-          salt: salt,
-          server_public_key_bn: convert16bit(server_public_key_bn),
-          server_public_key: server_public_key_bn.to_s(2),
-          shared_secret: shared_secret
+        ciphertext: ciphertext_with_header,
+        salt: salt,
+        server_public_key_bn: serverkey16bn,
+        server_public_key: server_public_key_bn.to_s(2),
+        shared_secret: shared_secret
       }
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
@@ -51,11 +59,9 @@ module Webpush
       cipher.encrypt
       cipher.key = content_encryption_key
       cipher.iv = nonce
-
       text = cipher.update(plaintext)
       padding = cipher.update("\2\0")
       e_text = text + padding + cipher.final
-
       e_tag = cipher.auth_tag
 
       e_text + e_tag
