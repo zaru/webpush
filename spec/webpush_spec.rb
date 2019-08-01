@@ -106,22 +106,15 @@ describe Webpush do
       {
         'Accept' => '*/*',
         'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'Content-Encoding' => 'aesgcm',
+        'Content-Encoding' => 'aes128gcm',
         'Content-Type' => 'application/octet-stream',
-        'Crypto-Key' => 'dh=BAgtUks5d90kFmxGevk9tH7GEmvz9DB0qcEMUsOBgKwMf-TMjsKIIG6LQvGcFAf6jcmAod15VVwmYwGIIxE4VWE',
-        'Encryption' => 'salt=WJeVM-RY-F9351SVxTFx_g',
         'Ttl' => '2419200',
         'Urgency' => 'normal',
         'User-Agent' => 'Ruby'
       }
     end
 
-    let(:vapid_headers) do
-      {
-        'Authorization' => 'WebPush jwt.encoded.payload',
-        'Crypto-Key' => 'p256ecdsa=' + vapid_public_key.delete('=')
-      }
-    end
+    let(:vapid_header) { "vapid t=jwt.encoded.payload,k=#{vapid_public_key.delete('=')}" }
 
     before do
       allow(Webpush::Encryption).to receive(:encrypt).and_return(payload)
@@ -141,8 +134,7 @@ describe Webpush do
     it 'calls the relevant service with the correct headers' do
       expect(Webpush::Encryption).to receive(:encrypt).and_return(payload)
 
-      expected_headers['Crypto-Key'] += ';' + vapid_headers['Crypto-Key']
-      expected_headers['Authorization'] = vapid_headers['Authorization']
+      expected_headers['Authorization'] = vapid_header
 
       stub_request(:post, expected_endpoint)
         .with(body: expected_body, headers: expected_headers)
@@ -223,10 +215,8 @@ describe Webpush do
       {
         'Accept' => '*/*',
         'Accept-Encoding' => 'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-        'Content-Encoding' => 'aesgcm',
+        'Content-Encoding' => 'aes128gcm',
         'Content-Type' => 'application/octet-stream',
-        'Crypto-Key' => 'dh=BAgtUks5d90kFmxGevk9tH7GEmvz9DB0qcEMUsOBgKwMf-TMjsKIIG6LQvGcFAf6jcmAod15VVwmYwGIIxE4VWE',
-        'Encryption' => 'salt=WJeVM-RY-F9351SVxTFx_g',
         'Ttl' => '2419200',
         'Urgency' => 'normal',
         'User-Agent' => 'Ruby'
@@ -259,9 +249,7 @@ describe Webpush do
     it 'message and encryption keys are optional' do
       expect(Webpush::Encryption).to_not receive(:encrypt)
 
-      expected_headers.delete('Crypto-Key')
       expected_headers.delete('Content-Encoding')
-      expected_headers.delete('Encryption')
 
       stub_request(:post, expected_endpoint)
         .with(body: nil, headers: expected_headers)
