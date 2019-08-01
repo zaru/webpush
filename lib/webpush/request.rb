@@ -42,7 +42,7 @@ module Webpush
       headers['Ttl']          = ttl
       headers['Urgency']      = urgency
 
-      if @payload.key?(:server_public_key)
+      if @payload.key?(:ciphertext)
         headers['Content-Encoding'] = 'aes128gcm'
         headers["Content-Length"] = @payload[:ciphertext].length.to_s
       end

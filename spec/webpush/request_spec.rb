@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Webpush::Request do
   describe '#headers' do
-    let(:request) { build_request(vapid: vapid_options) }
+    let(:request) { build_request }
 
     it { expect(request.headers['Content-Type']).to eq('application/octet-stream') }
     it { expect(request.headers['Ttl']).to eq('2419200') }
@@ -65,7 +65,7 @@ describe Webpush::Request do
 
     describe 'from :ttl' do
       it 'can override Ttl with :ttl option with string' do
-        request = build_request(ttl: '300', vapid: vapid_options)
+        request = build_request(ttl: '300')
 
         expect(request.headers['Ttl']).to eq('300')
       end
@@ -79,7 +79,7 @@ describe Webpush::Request do
 
     describe 'from :urgency' do
       it 'can override Urgency with :urgency option' do
-        request = build_request(urgency: 'high', vapid: vapid_options)
+        request = build_request(urgency: 'high')
 
         expect(request.headers['Urgency']).to eq('high')
       end
@@ -101,7 +101,7 @@ describe Webpush::Request do
       expect(Webpush::VapidKey).to receive(:from_keys).with(vapid_public_key, vapid_private_key).and_return(vapid_key)
       expect(JWT).to receive(:encode).with(jwt_payload, vapid_key.curve, 'ES256', jwt_header_fields).and_return('jwt.encoded.payload')
 
-      request = build_request(vapid: vapid_options)
+      request = build_request
       header = request.build_vapid_header
 
       expect(header).to eq("vapid t=jwt.encoded.payload,k=#{vapid_public_key.delete('=')}")
@@ -119,7 +119,7 @@ describe Webpush::Request do
     it 'extracts :ciphertext from the :payload argument' do
       allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted')
 
-      request = build_request(message: 'Hello', vapid: vapid_options)
+      request = build_request(message: 'Hello')
 
       expect(request.body).to eq('encrypted')
     end
