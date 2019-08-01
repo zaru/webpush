@@ -41,31 +41,27 @@ module Webpush
       headers['Content-Type'] = 'application/octet-stream'
       headers['Ttl']          = ttl
       headers['Urgency']      = urgency
-
-      if @payload.key?(:server_public_key)
-        headers['Content-Encoding'] = 'aes128gcm'
-      end
+      headers['Content-Encoding'] = 'aes128gcm'
+      headers["Content-Length"] = @payload[:ciphertext].length.to_s
 
       if api_key?
         headers['Authorization'] = "key=#{api_key}"
       elsif vapid?
-        vapid_headers = build_vapid_headers
-        headers['Authorization'] = vapid_headers['Authorization']
-        headers['Crypto-Key'] = [headers['Crypto-Key'], vapid_headers['Crypto-Key']].compact.join(';')
+        headers["Authorization"] = build_vapid_header
       end
 
       headers
     end
     # rubocop:enable Metrics/MethodLength
 
-    def build_vapid_headers
-      vapid_key = vapid_pem ? VapidKey.from_pem(vapid_pem) : VapidKey.from_keys(vapid_public_key, vapid_private_key)
+    def build_vapid_header
+      # https://tools.ietf.org/id/draft-ietf-webpush-vapid-03.html
+
+      vapid_key = VapidKey.from_keys(vapid_public_key, vapid_private_key)
       jwt = JWT.encode(jwt_payload, vapid_key.curve, 'ES256', jwt_header_fields)
       p256ecdsa = vapid_key.public_key_for_push_header
 
-      {
-        'Authorization' => 'WebPush ' + jwt,
-      }
+       "vapid t=#{jwt},k=#{p256ecdsa}"
     end
 
     def body
@@ -103,7 +99,7 @@ module Webpush
     end
 
     def jwt_header_fields
-      { 'typ' => 'JWT' }
+      { "typ": "JWT", "alg": "ES256" }
     end
 
     def audience
