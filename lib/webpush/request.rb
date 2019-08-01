@@ -41,8 +41,11 @@ module Webpush
       headers['Content-Type'] = 'application/octet-stream'
       headers['Ttl']          = ttl
       headers['Urgency']      = urgency
-      headers['Content-Encoding'] = 'aes128gcm'
-      headers["Content-Length"] = @payload[:ciphertext].length.to_s
+
+      if @payload.key?(:server_public_key)
+        headers['Content-Encoding'] = 'aes128gcm'
+        headers["Content-Length"] = @payload[:ciphertext].length.to_s
+      end
 
       if api_key?
         headers['Authorization'] = "key=#{api_key}"
