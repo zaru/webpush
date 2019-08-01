@@ -85,14 +85,6 @@ module Webpush
       @options.fetch(:urgency).to_s
     end
 
-    def dh_param
-      trim_encode64(@payload.fetch(:server_public_key))
-    end
-
-    def salt_param
-      trim_encode64(@payload.fetch(:salt))
-    end
-
     def jwt_payload
       {
         aud: audience,
