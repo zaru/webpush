@@ -40,15 +40,8 @@ module Webpush
       raise ArgumentError, "encrypted payload is too big" if rs > 4096
 
       aes128gcmheader = "#{salt}" + [rs].pack('N*') + [65].pack('c*') + serverkey16bn
-      ciphertext_with_header = aes128gcmheader + ciphertext
 
-      {
-        ciphertext: ciphertext_with_header,
-        salt: salt,
-        server_public_key_bn: serverkey16bn,
-        server_public_key: server_public_key_bn.to_s(2),
-        shared_secret: shared_secret
-      }
+      aes128gcmheader + ciphertext
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 

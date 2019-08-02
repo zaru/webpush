@@ -42,9 +42,9 @@ module Webpush
       headers['Ttl']          = ttl
       headers['Urgency']      = urgency
 
-      if @payload.key?(:ciphertext)
+      if @payload
         headers['Content-Encoding'] = 'aes128gcm'
-        headers["Content-Length"] = @payload[:ciphertext].length.to_s
+        headers["Content-Length"] = @payload.length.to_s
       end
 
       if api_key?
@@ -68,7 +68,7 @@ module Webpush
     end
 
     def body
-      @payload.fetch(:ciphertext, '')
+      @payload || ''
     end
 
     private
@@ -129,7 +129,7 @@ module Webpush
     end
 
     def build_payload(message, subscription)
-      return {} if message.nil? || message.empty?
+      return nil if message.nil? || message.empty?
 
       encrypt_payload(message, subscription.fetch(:keys))
     end

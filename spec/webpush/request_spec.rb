@@ -10,7 +10,7 @@ describe Webpush::Request do
 
     describe 'from :message' do
       it 'inserts encryption headers for valid payload' do
-        allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted', server_public_key: 'server_public_key', salt: 'salt')
+        allow(Webpush::Encryption).to receive(:encrypt).and_return('encrypted')
         request = build_request(message: 'Hello')
 
         expect(request.headers['Content-Encoding']).to eq('aes128gcm')
@@ -116,21 +116,15 @@ describe Webpush::Request do
   end
 
   describe '#body' do
-    it 'extracts :ciphertext from the :payload argument' do
-      allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted')
+    it 'is set to the payload if a message is provided' do
+      allow(Webpush::Encryption).to receive(:encrypt).and_return('encrypted')
 
       request = build_request(message: 'Hello')
 
       expect(request.body).to eq('encrypted')
     end
 
-    it 'is empty string when no :ciphertext' do
-      request = build_request(payload: {})
-
-      expect(request.body).to eq('')
-    end
-
-    it 'is empty string when no :payload' do
+    it 'is empty string when no message is provided' do
       request = build_request
 
       expect(request.body).to eq('')
