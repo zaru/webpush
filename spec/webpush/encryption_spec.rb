@@ -35,7 +35,7 @@ describe Webpush::Encryption do
       decrypted_data = ECE.decrypt(ciphertext,
                                    key: shared_secret,
                                    salt: salt,
-                                   server_public_key: server_public_key_bn,
+                                   server_public_key: serverkey16bn,
                                    user_public_key: decode64(p256dh),
                                    auth: decode64(auth))
 
