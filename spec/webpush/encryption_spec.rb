@@ -63,23 +63,28 @@ describe Webpush::Encryption do
       unpadded_auth = '1C1PBkJQsVwD9tkuLR1x5A'
 
       payload = Webpush::Encryption.encrypt('Hello World', unpadded_p256dh, unpadded_auth)
-      encrypted = payload.fetch(:ciphertext)
+      salt = payload.byteslice(0, 16)
+      rs = payload.byteslice(16, 4).unpack("N*").first
+      idlen = payload.byteslice(20).unpack("C*").first
+      serverkey16bn = payload.byteslice(21, idlen)
+      ciphertext = payload.byteslice(21 + idlen + 1, rs)
 
-      decrypted_data = ECE.decrypt(encrypted,
-                                   key: payload.fetch(:shared_secret),
-                                   salt: payload.fetch(:salt),
-                                   server_public_key: payload.fetch(:server_public_key_bn),
+      expect(payload.bytesize).to eq(21 + idlen + rs)
+
+      group_name = 'prime256v1'
+      group = OpenSSL::PKey::EC::Group.new(group_name)
+      server_public_key_bn = OpenSSL::BN.new(serverkey16bn.unpack('H*').first, 16)
+      server_public_key = OpenSSL::PKey::EC::Point.new(group, server_public_key_bn)
+      shared_secret = curve.dh_compute_key(server_public_key)
+
+      decrypted_data = ECE.decrypt(ciphertext,
+                                   key: shared_secret,
+                                   salt: salt,
+                                   server_public_key: serverkey16bn,
                                    user_public_key: decode64(pad64(unpadded_p256dh)),
                                    auth: decode64(pad64(unpadded_auth)))
 
       expect(decrypted_data).to eq('Hello World')
-    end
-
-    def generate_ecdh_key
-      group = 'prime256v1'
-      curve = OpenSSL::PKey::EC.new(group)
-      curve.generate_key
-      curve.public_key.to_bn.to_s(2)
     end
 
     def encode64(bytes)
