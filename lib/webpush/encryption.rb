@@ -39,7 +39,7 @@ module Webpush
       rs = ciphertext.bytesize
       raise ArgumentError, "encrypted payload is too big" if rs > 4096
 
-      aes128gcmheader = "#{salt}" + [rs].pack('N*') + [65].pack('c*') + serverkey16bn
+      aes128gcmheader = "#{salt}" + [rs].pack('N*') + [serverkey16bn.bytesize].pack('C*') + serverkey16bn
 
       aes128gcmheader + ciphertext
     end
