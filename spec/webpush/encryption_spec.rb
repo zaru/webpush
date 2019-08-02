@@ -5,11 +5,12 @@ describe Webpush::Encryption do
   describe '#encrypt' do
     let(:curve) do
       group = 'prime256v1'
-      OpenSSL::PKey::EC.new(group)
+      curve = OpenSSL::PKey::EC.new(group)
+      curve.generate_key
+      curve
     end
 
     let(:p256dh) do
-      curve.generate_key
       ecdh_key = curve.public_key.to_bn.to_s(2)
       encode64(ecdh_key)
     end
@@ -18,24 +19,13 @@ describe Webpush::Encryption do
 
     it 'returns ECDH encrypted cipher text, salt, and server_public_key' do
       payload = Webpush::Encryption.encrypt('Hello World', p256dh, auth)
-      salt = payload.byteslice(0, 16)
-      rs = payload.byteslice(16, 4).unpack("N*").first
-      idlen = payload.byteslice(20).unpack("C*").first
-      serverkey16bn = payload.byteslice(21, idlen)
-      ciphertext = payload.byteslice(21 + idlen + 1, rs)
 
-      expect(payload.bytesize).to eq(21 + idlen + rs)
+      payload_vals = extract_payload_values(payload)
 
-      group_name = 'prime256v1'
-      group = OpenSSL::PKey::EC::Group.new(group_name)
-      server_public_key_bn = OpenSSL::BN.new(serverkey16bn.unpack('H*').first, 16)
-      server_public_key = OpenSSL::PKey::EC::Point.new(group, server_public_key_bn)
-      shared_secret = curve.dh_compute_key(server_public_key)
-
-      decrypted_data = ECE.decrypt(ciphertext,
-                                   key: shared_secret,
-                                   salt: salt,
-                                   server_public_key: serverkey16bn,
+      decrypted_data = ECE.decrypt(payload_vals[:ciphertext],
+                                   key: payload_vals[:shared_secret],
+                                   salt: payload_vals[:salt],
+                                   server_public_key: payload_vals[:serverkey16bn],
                                    user_public_key: decode64(p256dh),
                                    auth: decode64(auth))
 
@@ -59,10 +49,24 @@ describe Webpush::Encryption do
 
     # Bug fix for https://github.com/zaru/webpush/issues/22
     it 'handles unpadded base64 encoded subscription keys' do
-      unpadded_p256dh = 'BK74n-ZA6kfMDEuCFbQH1Y5T33p39PvnzNeuD5LqTs8cF-uaQFUHn_v5kwV6dYIIL4nFabxghQNF_vlnAXX7OiU'
-      unpadded_auth = '1C1PBkJQsVwD9tkuLR1x5A'
+      unpadded_p256dh = p256dh.gsub(/=*\Z/, '')
+      unpadded_auth = auth.gsub(/=*\Z/, '')
 
       payload = Webpush::Encryption.encrypt('Hello World', unpadded_p256dh, unpadded_auth)
+
+      payload_vals = extract_payload_values(payload)
+
+      decrypted_data = ECE.decrypt(payload_vals[:ciphertext],
+                                   key: payload_vals[:shared_secret],
+                                   salt: payload_vals[:salt],
+                                   server_public_key: payload_vals[:serverkey16bn],
+                                   user_public_key: decode64(pad64(unpadded_p256dh)),
+                                   auth: decode64(pad64(unpadded_auth)))
+
+      expect(decrypted_data).to eq('Hello World')
+    end
+
+    def extract_payload_values payload
       salt = payload.byteslice(0, 16)
       rs = payload.byteslice(16, 4).unpack("N*").first
       idlen = payload.byteslice(20).unpack("C*").first
@@ -77,14 +81,12 @@ describe Webpush::Encryption do
       server_public_key = OpenSSL::PKey::EC::Point.new(group, server_public_key_bn)
       shared_secret = curve.dh_compute_key(server_public_key)
 
-      decrypted_data = ECE.decrypt(ciphertext,
-                                   key: shared_secret,
-                                   salt: salt,
-                                   server_public_key: serverkey16bn,
-                                   user_public_key: decode64(pad64(unpadded_p256dh)),
-                                   auth: decode64(pad64(unpadded_auth)))
-
-      expect(decrypted_data).to eq('Hello World')
+      {
+          ciphertext: ciphertext,
+          shared_secret: shared_secret,
+          salt: salt,
+          serverkey16bn: serverkey16bn
+      }
     end
 
     def encode64(bytes)
