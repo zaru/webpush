@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'ece'
 
 describe Webpush::Encryption do
   describe '#encrypt' do
@@ -22,7 +21,7 @@ describe Webpush::Encryption do
 
       payload_vals = extract_payload_values(payload)
 
-      decrypted_data = ECE.decrypt(payload_vals[:ciphertext],
+      decrypted_data = Webpush::Encryption.decrypt(payload_vals[:ciphertext],
                                    key: payload_vals[:shared_secret],
                                    salt: payload_vals[:salt],
                                    server_public_key: payload_vals[:serverkey16bn],
@@ -56,7 +55,7 @@ describe Webpush::Encryption do
 
       payload_vals = extract_payload_values(payload)
 
-      decrypted_data = ECE.decrypt(payload_vals[:ciphertext],
+      decrypted_data = Webpush::Encryption.decrypt(payload_vals[:ciphertext],
                                    key: payload_vals[:shared_secret],
                                    salt: payload_vals[:salt],
                                    server_public_key: payload_vals[:serverkey16bn],
@@ -71,9 +70,9 @@ describe Webpush::Encryption do
       rs = payload.byteslice(16, 4).unpack("N*").first
       idlen = payload.byteslice(20).unpack("C*").first
       serverkey16bn = payload.byteslice(21, idlen)
-      ciphertext = payload.byteslice(21 + idlen + 1, rs)
+      ciphertext = payload.byteslice(20 + idlen + 1, rs)
 
-      expect(payload.bytesize).to eq(21 + idlen + rs)
+      expect(payload.bytesize).to eq(20 + idlen + 1 + rs)
 
       group_name = 'prime256v1'
       group = OpenSSL::PKey::EC::Group.new(group_name)
