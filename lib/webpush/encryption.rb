@@ -44,47 +44,6 @@ module Webpush
       aes128gcmheader + ciphertext
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
-    
-    def decrypt(ciphertext, params)
-      shared_secret = params[:key]
-      salt = params[:salt]
-      server_public_key_bn = params[:server_public_key_bn]
-      p256dh = params[:p256dh]
-      auth =  params[:auth]
-
-      client_public_key_bn = OpenSSL::BN.new(Webpush.decode64(p256dh), 2)
-
-      client_auth_token = Webpush.decode64(auth)
-      
-      info = "WebPush: info\0" + client_public_key_bn.to_s(2) + server_public_key_bn.to_s(2)
-      content_encryption_key_info = "Content-Encoding: aes128gcm\0"
-      nonce_info = "Content-Encoding: nonce\0"
-      
-      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: info).next_bytes(32)
-      
-      content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).next_bytes(16)      
-      nonce = HKDF.new(prk, salt: salt, info: nonce_info).next_bytes(12)
-
-      decrypt_payload(ciphertext, content_encryption_key, nonce)
-    end
-    
-    def decrypt_payload(data, encryption_key, nonce)
-      
-      secret_data = data.byteslice(0, data.length-16)
-      auth = data.byteslice(data.length-16, data.size)
-      decipher = OpenSSL::Cipher.new('aes-128-gcm')
-      decipher.decrypt
-      decipher.key = encryption_key
-      decipher.iv = nonce
-      decipher.auth_tag = auth
-      
-      decrypted = decipher.update(secret_data) + decipher.final
-      
-      e = decrypted.byteslice(-2, decrypted.bytesize)
-      raise ArgumentError, 'decryption error' if e != "\2\0"
-
-      decrypted.byteslice(0, decrypted.size-2)
-    end
 
     private
 
