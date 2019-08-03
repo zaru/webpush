@@ -24,9 +24,9 @@ describe Webpush::Encryption do
       decrypted_data = Webpush::Encryption.decrypt(payload_vals[:ciphertext],
                                    key: payload_vals[:shared_secret],
                                    salt: payload_vals[:salt],
-                                   server_public_key: payload_vals[:serverkey16bn],
-                                   user_public_key: decode64(p256dh),
-                                   auth: decode64(auth))
+                                   server_public_key_bn: payload_vals[:server_public_key_bn],
+                                   p256dh: p256dh,
+                                   auth: auth)
 
       expect(decrypted_data).to eq('Hello World')
     end
@@ -58,9 +58,9 @@ describe Webpush::Encryption do
       decrypted_data = Webpush::Encryption.decrypt(payload_vals[:ciphertext],
                                    key: payload_vals[:shared_secret],
                                    salt: payload_vals[:salt],
-                                   server_public_key: payload_vals[:serverkey16bn],
-                                   user_public_key: decode64(pad64(unpadded_p256dh)),
-                                   auth: decode64(pad64(unpadded_auth)))
+                                   server_public_key_bn: payload_vals[:server_public_key_bn],
+                                   p256dh: unpadded_p256dh,
+                                   auth: unpadded_auth)
 
       expect(decrypted_data).to eq('Hello World')
     end
@@ -70,9 +70,9 @@ describe Webpush::Encryption do
       rs = payload.byteslice(16, 4).unpack("N*").first
       idlen = payload.byteslice(20).unpack("C*").first
       serverkey16bn = payload.byteslice(21, idlen)
-      ciphertext = payload.byteslice(20 + idlen + 1, rs)
+      ciphertext = payload.byteslice(21 + idlen, rs)
 
-      expect(payload.bytesize).to eq(20 + idlen + 1 + rs)
+      expect(payload.bytesize).to eq(21 + idlen + rs)
 
       group_name = 'prime256v1'
       group = OpenSSL::PKey::EC::Group.new(group_name)
@@ -84,7 +84,7 @@ describe Webpush::Encryption do
           ciphertext: ciphertext,
           shared_secret: shared_secret,
           salt: salt,
-          serverkey16bn: serverkey16bn
+          server_public_key_bn: server_public_key_bn
       }
     end
 

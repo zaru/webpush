@@ -48,21 +48,13 @@ module Webpush
     def decrypt(ciphertext, params)
       shared_secret = params[:key]
       salt = params[:salt]
-      serverkey16bn = params[:server_public_key]
-      user_public_key = params[:user_public_key]
+      server_public_key_bn = params[:server_public_key_bn]
+      p256dh = params[:p256dh]
       auth =  params[:auth]
-      
-            
-      group_name = 'prime256v1'
-      group = OpenSSL::PKey::EC::Group.new(group_name)
-                  
-      server_public_key = OpenSSL::PKey::EC::Point.new(group, serverkey16bn)
-      server_public_key_bn = server_public_key.to_bn
-      
-      client_public_key = OpenSSL::PKey::EC::Point.new(group, user_public_key)
-      client_public_key_bn = client_public_key.to_bn
-                  
-      client_auth_token = auth
+
+      client_public_key_bn = OpenSSL::BN.new(Webpush.decode64(p256dh), 2)
+
+      client_auth_token = Webpush.decode64(auth)
       
       info = "WebPush: info\0" + client_public_key_bn.to_s(2) + server_public_key_bn.to_s(2)
       content_encryption_key_info = "Content-Encoding: aes128gcm\0"
@@ -78,8 +70,8 @@ module Webpush
     
     def decrypt_payload(data, encryption_key, nonce)
       
-      secret_data = data.slice(0, data.length-16)
-      auth = data.slice(data.length-16, data.size)
+      secret_data = data.byteslice(0, data.length-16)
+      auth = data.byteslice(data.length-16, data.size)
       decipher = OpenSSL::Cipher.new('aes-128-gcm')
       decipher.decrypt
       decipher.key = encryption_key
@@ -88,9 +80,10 @@ module Webpush
       
       decrypted = decipher.update(secret_data) + decipher.final
       
-      e = decrypted.slice(-2, decrypted.size)      
+      e = decrypted.byteslice(-2, decrypted.bytesize)
       raise ArgumentError, 'decryption error' if e != "\2\0"
-      plaintext = decrypted.slice(0, decrypted.size-2)      
+
+      decrypted.byteslice(0, decrypted.size-2)
     end
 
     private
