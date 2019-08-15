@@ -23,62 +23,41 @@ module Webpush
 
       client_auth_token = Webpush.decode64(auth)
 
-      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: "Content-Encoding: auth\0").next_bytes(32)
+      info = "WebPush: info\0" + client_public_key_bn.to_s(2) + server_public_key_bn.to_s(2)
+      content_encryption_key_info = "Content-Encoding: aes128gcm\0"
+      nonce_info = "Content-Encoding: nonce\0"
 
-      context = create_context(client_public_key_bn, server_public_key_bn)
+      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: info).next_bytes(32)
 
-      content_encryption_key_info = create_info('aesgcm', context)
       content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).next_bytes(16)
 
-      nonce_info = create_info('nonce', context)
       nonce = HKDF.new(prk, salt: salt, info: nonce_info).next_bytes(12)
 
       ciphertext = encrypt_payload(message, content_encryption_key, nonce)
 
-      {
-        ciphertext: ciphertext,
-        salt: salt,
-        server_public_key_bn: convert16bit(server_public_key_bn),
-        server_public_key: server_public_key_bn.to_s(2),
-        shared_secret: shared_secret
-      }
+      serverkey16bn = convert16bit(server_public_key_bn)
+      rs = ciphertext.bytesize
+      raise ArgumentError, "encrypted payload is too big" if rs > 4096
+
+      aes128gcmheader = "#{salt}" + [rs].pack('N*') + [serverkey16bn.bytesize].pack('C*') + serverkey16bn
+
+      aes128gcmheader + ciphertext
     end
     # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     private
-
-    def create_context(client_public_key, server_public_key)
-      c = convert16bit(client_public_key)
-      s = convert16bit(server_public_key)
-      context = "\0"
-      context += [c.bytesize].pack('n*')
-      context += c
-      context += [s.bytesize].pack('n*')
-      context += s
-      context
-    end
 
     def encrypt_payload(plaintext, content_encryption_key, nonce)
       cipher = OpenSSL::Cipher.new('aes-128-gcm')
       cipher.encrypt
       cipher.key = content_encryption_key
       cipher.iv = nonce
-      padding = cipher.update("\0\0")
       text = cipher.update(plaintext)
-
-      e_text = padding + text + cipher.final
+      padding = cipher.update("\2\0")
+      e_text = text + padding + cipher.final
       e_tag = cipher.auth_tag
 
       e_text + e_tag
-    end
-
-    def create_info(type, context)
-      info = 'Content-Encoding: '
-      info += type
-      info += "\0"
-      info += 'P-256'
-      info += context
-      info
     end
 
     def convert16bit(key)

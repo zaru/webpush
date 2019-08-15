@@ -1,27 +1,24 @@
 require 'spec_helper'
-require 'ece'
 
 describe Webpush::Encryption do
   describe '#encrypt' do
-    let(:p256dh) do
-      encode64(generate_ecdh_key)
+    let(:curve) do
+      group = 'prime256v1'
+      curve = OpenSSL::PKey::EC.new(group)
+      curve.generate_key
+      curve
     end
 
-    let(:auth) { encode64(Random.new.bytes(16)) }
+    let(:p256dh) do
+      ecdh_key = curve.public_key.to_bn.to_s(2)
+      Base64.urlsafe_encode64(ecdh_key)
+    end
+
+    let(:auth) { Base64.urlsafe_encode64(Random.new.bytes(16)) }
 
     it 'returns ECDH encrypted cipher text, salt, and server_public_key' do
       payload = Webpush::Encryption.encrypt('Hello World', p256dh, auth)
-
-      encrypted = payload.fetch(:ciphertext)
-
-      decrypted_data = ECE.decrypt(encrypted,
-                                   key: payload.fetch(:shared_secret),
-                                   salt: payload.fetch(:salt),
-                                   server_public_key: payload.fetch(:server_public_key_bn),
-                                   user_public_key: decode64(p256dh),
-                                   auth: decode64(auth))
-
-      expect(decrypted_data).to eq('Hello World')
+      expect(decrypt(payload)).to eq('Hello World')
     end
 
     it 'returns error when message is blank' do
@@ -41,40 +38,58 @@ describe Webpush::Encryption do
 
     # Bug fix for https://github.com/zaru/webpush/issues/22
     it 'handles unpadded base64 encoded subscription keys' do
-      unpadded_p256dh = 'BK74n-ZA6kfMDEuCFbQH1Y5T33p39PvnzNeuD5LqTs8cF-uaQFUHn_v5kwV6dYIIL4nFabxghQNF_vlnAXX7OiU'
-      unpadded_auth = '1C1PBkJQsVwD9tkuLR1x5A'
+      unpadded_p256dh = p256dh.gsub(/=*\Z/, '')
+      unpadded_auth = auth.gsub(/=*\Z/, '')
 
       payload = Webpush::Encryption.encrypt('Hello World', unpadded_p256dh, unpadded_auth)
-      encrypted = payload.fetch(:ciphertext)
-
-      decrypted_data = ECE.decrypt(encrypted,
-                                   key: payload.fetch(:shared_secret),
-                                   salt: payload.fetch(:salt),
-                                   server_public_key: payload.fetch(:server_public_key_bn),
-                                   user_public_key: decode64(pad64(unpadded_p256dh)),
-                                   auth: decode64(pad64(unpadded_auth)))
-
-      expect(decrypted_data).to eq('Hello World')
+      expect(decrypt(payload)).to eq('Hello World')
     end
 
-    def generate_ecdh_key
-      group = 'prime256v1'
-      curve = OpenSSL::PKey::EC.new(group)
-      curve.generate_key
-      curve.public_key.to_bn.to_s(2)
+    def decrypt payload
+      salt = payload.byteslice(0, 16)
+      rs = payload.byteslice(16, 4).unpack("N*").first
+      idlen = payload.byteslice(20).unpack("C*").first
+      serverkey16bn = payload.byteslice(21, idlen)
+      ciphertext = payload.byteslice(21 + idlen, rs)
+
+      expect(payload.bytesize).to eq(21 + idlen + rs)
+
+      group_name = 'prime256v1'
+      group = OpenSSL::PKey::EC::Group.new(group_name)
+      server_public_key_bn = OpenSSL::BN.new(serverkey16bn.unpack('H*').first, 16)
+      server_public_key = OpenSSL::PKey::EC::Point.new(group, server_public_key_bn)
+      shared_secret = curve.dh_compute_key(server_public_key)
+
+      client_public_key_bn = curve.public_key.to_bn
+      client_auth_token = Webpush.decode64(auth)
+
+      info = "WebPush: info\0" + client_public_key_bn.to_s(2) + server_public_key_bn.to_s(2)
+      content_encryption_key_info = "Content-Encoding: aes128gcm\0"
+      nonce_info = "Content-Encoding: nonce\0"
+
+      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: info).next_bytes(32)
+
+      content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).next_bytes(16)
+      nonce = HKDF.new(prk, salt: salt, info: nonce_info).next_bytes(12)
+
+      decrypt_ciphertext(ciphertext, content_encryption_key, nonce)
     end
 
-    def encode64(bytes)
-      Base64.urlsafe_encode64(bytes)
-    end
+    def decrypt_ciphertext(ciphertext, content_encryption_key, nonce)
+      secret_data = ciphertext.byteslice(0, ciphertext.bytesize-16)
+      auth = ciphertext.byteslice(ciphertext.bytesize-16, ciphertext.bytesize)
+      decipher = OpenSSL::Cipher.new('aes-128-gcm')
+      decipher.decrypt
+      decipher.key = content_encryption_key
+      decipher.iv = nonce
+      decipher.auth_tag = auth
 
-    def decode64(str)
-      Base64.urlsafe_decode64(str)
-    end
+      decrypted = decipher.update(secret_data) + decipher.final
 
-    def pad64(str)
-      str = str.ljust((str.length + 3) & ~3, '=') if !str.end_with?('=') && str.length % 4 != 0
-      str
+      e = decrypted.byteslice(-2, decrypted.bytesize)
+      expect(e).to eq("\2\0")
+
+      decrypted.byteslice(0, decrypted.bytesize-2)
     end
   end
 end

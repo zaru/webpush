@@ -42,37 +42,33 @@ module Webpush
       headers['Ttl']          = ttl
       headers['Urgency']      = urgency
 
-      if @payload.key?(:server_public_key)
-        headers['Content-Encoding'] = 'aesgcm'
-        headers['Encryption'] = "salt=#{salt_param}"
-        headers['Crypto-Key'] = "dh=#{dh_param}"
+      if @payload
+        headers['Content-Encoding'] = 'aes128gcm'
+        headers["Content-Length"] = @payload.length.to_s
       end
 
       if api_key?
         headers['Authorization'] = "key=#{api_key}"
       elsif vapid?
-        vapid_headers = build_vapid_headers
-        headers['Authorization'] = vapid_headers['Authorization']
-        headers['Crypto-Key'] = [headers['Crypto-Key'], vapid_headers['Crypto-Key']].compact.join(';')
+        headers["Authorization"] = build_vapid_header
       end
 
       headers
     end
     # rubocop:enable Metrics/MethodLength
 
-    def build_vapid_headers
+    def build_vapid_header
+      # https://tools.ietf.org/id/draft-ietf-webpush-vapid-03.html
+
       vapid_key = vapid_pem ? VapidKey.from_pem(vapid_pem) : VapidKey.from_keys(vapid_public_key, vapid_private_key)
       jwt = JWT.encode(jwt_payload, vapid_key.curve, 'ES256', jwt_header_fields)
       p256ecdsa = vapid_key.public_key_for_push_header
 
-      {
-        'Authorization' => 'WebPush ' + jwt,
-        'Crypto-Key' => 'p256ecdsa=' + p256ecdsa
-      }
+       "vapid t=#{jwt},k=#{p256ecdsa}"
     end
 
     def body
-      @payload.fetch(:ciphertext, '')
+      @payload || ''
     end
 
     private
@@ -89,14 +85,6 @@ module Webpush
       @options.fetch(:urgency).to_s
     end
 
-    def dh_param
-      trim_encode64(@payload.fetch(:server_public_key))
-    end
-
-    def salt_param
-      trim_encode64(@payload.fetch(:salt))
-    end
-
     def jwt_payload
       {
         aud: audience,
@@ -106,7 +94,7 @@ module Webpush
     end
 
     def jwt_header_fields
-      { 'typ' => 'JWT' }
+      { "typ": "JWT", "alg": "ES256" }
     end
 
     def audience
@@ -141,7 +129,7 @@ module Webpush
     end
 
     def build_payload(message, subscription)
-      return {} if message.nil? || message.empty?
+      return nil if message.nil? || message.empty?
 
       encrypt_payload(message, subscription.fetch(:keys))
     end

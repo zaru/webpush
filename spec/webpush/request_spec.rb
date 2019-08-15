@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Webpush::Request do
   describe '#headers' do
-    let(:request) { build_request(vapid: vapid_options) }
+    let(:request) { build_request }
 
     it { expect(request.headers['Content-Type']).to eq('application/octet-stream') }
     it { expect(request.headers['Ttl']).to eq('2419200') }
@@ -10,12 +10,11 @@ describe Webpush::Request do
 
     describe 'from :message' do
       it 'inserts encryption headers for valid payload' do
-        allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted', server_public_key: 'server_public_key', salt: 'salt')
+        allow(Webpush::Encryption).to receive(:encrypt).and_return('encrypted')
         request = build_request(message: 'Hello')
 
-        expect(request.headers['Content-Encoding']).to eq('aesgcm')
-        expect(request.headers['Encryption']).to eq('salt=c2FsdA')
-        expect(request.headers['Crypto-Key']).to eq('dh=c2VydmVyX3B1YmxpY19rZXk;p256ecdsa=' + vapid_options[:public_key].delete('='))
+        expect(request.headers['Content-Encoding']).to eq('aes128gcm')
+        expect(request.headers['Content-Length']).to eq('9')
       end
     end
 
@@ -66,7 +65,7 @@ describe Webpush::Request do
 
     describe 'from :ttl' do
       it 'can override Ttl with :ttl option with string' do
-        request = build_request(ttl: '300', vapid: vapid_options)
+        request = build_request(ttl: '300')
 
         expect(request.headers['Ttl']).to eq('300')
       end
@@ -80,65 +79,52 @@ describe Webpush::Request do
 
     describe 'from :urgency' do
       it 'can override Urgency with :urgency option' do
-        request = build_request(urgency: 'high', vapid: vapid_options)
+        request = build_request(urgency: 'high')
 
         expect(request.headers['Urgency']).to eq('high')
       end
     end
   end
 
-  describe '#build_vapid_headers' do
-    it 'returns hash of VAPID headers' do
+  describe '#build_vapid_header' do
+    it 'returns the VAPID header' do
       time = Time.at(1_476_150_897)
       jwt_payload = {
         aud: 'https://fcm.googleapis.com',
         exp: time.to_i + 24 * 60 * 60,
         sub: 'mailto:sender@example.com'
       }
-      jwt_header_fields = { 'typ' => 'JWT' }
+      jwt_header_fields = { "typ": "JWT", "alg": "ES256" }
 
       vapid_key = Webpush::VapidKey.from_keys(vapid_public_key, vapid_private_key)
       expect(Time).to receive(:now).and_return(time)
       expect(Webpush::VapidKey).to receive(:from_keys).with(vapid_public_key, vapid_private_key).and_return(vapid_key)
       expect(JWT).to receive(:encode).with(jwt_payload, vapid_key.curve, 'ES256', jwt_header_fields).and_return('jwt.encoded.payload')
 
-      request = build_request(vapid: vapid_options)
-      headers = request.build_vapid_headers
-      # headers = Webpush::Request.headers({
-      #   audience: 'https://fcm.googleapis.com',
-      #   subject: 'mailto:sender@example.com',
-      #   public_key: vapid_public_key,
-      #   private_key: vapid_private_key
-      # })
+      request = build_request
+      header = request.build_vapid_header
 
-      expect(headers['Authorization']).to eq('WebPush jwt.encoded.payload')
-      expect(headers['Crypto-Key']).to eq('p256ecdsa=' + vapid_public_key.delete('='))
+      expect(header).to eq("vapid t=jwt.encoded.payload,k=#{vapid_public_key.delete('=')}")
     end
 
     it 'supports PEM format' do
       pem = Webpush::VapidKey.new.to_pem
       expect(Webpush::VapidKey).to receive(:from_pem).with(pem).and_call_original
       request = build_request(vapid: { subject: 'mailto:sender@example.com', pem: pem })
-      request.build_vapid_headers
+      request.build_vapid_header
     end
   end
 
   describe '#body' do
-    it 'extracts :ciphertext from the :payload argument' do
-      allow(Webpush::Encryption).to receive(:encrypt).and_return(ciphertext: 'encrypted')
+    it 'is set to the payload if a message is provided' do
+      allow(Webpush::Encryption).to receive(:encrypt).and_return('encrypted')
 
-      request = build_request(message: 'Hello', vapid: vapid_options)
+      request = build_request(message: 'Hello')
 
       expect(request.body).to eq('encrypted')
     end
 
-    it 'is empty string when no :ciphertext' do
-      request = build_request(payload: {})
-
-      expect(request.body).to eq('')
-    end
-
-    it 'is empty string when no :payload' do
+    it 'is empty string when no message is provided' do
       request = build_request
 
       expect(request.body).to eq('')
