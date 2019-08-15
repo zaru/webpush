@@ -1,5 +1,21 @@
 # Change Log
 
+## [v1.0.0](https://github.com/zaru/webpush/tree/v1.0.0) (2019-08-15)
+
+A stable version 1.0.0 has been released.
+
+Thanks @mohamedhafez, @mplatov and @MedetaiAkaru for everything!
+
+[Full Changelog](https://github.com/zaru/webpush/compare/v0.3.8...v1.0.0)
+
+**Merged pull requests:**
+
+- switch to aes128gcm encoding [\#84](https://github.com/zaru/webpush/pull/84) ([mohamedhafez](https://github.com/mohamedhafez))
+- Fixed fcm spec [\#77](https://github.com/zaru/webpush/pull/77) ([zaru](https://github.com/zaru))
+- add fcm endpoints [\#76](https://github.com/zaru/webpush/pull/76) ([MedetaiAkaru](https://github.com/MedetaiAkaru))
+- Add Rubocop and fix [\#74](https://github.com/zaru/webpush/pull/74) ([zaru](https://github.com/zaru))
+- Fix TravisCI bundler version [\#73](https://github.com/zaru/webpush/pull/73) ([zaru](https://github.com/zaru))
+
 ## [v0.3.8](https://github.com/zaru/webpush/tree/v0.3.8) (2019-04-16)
 [Full Changelog](https://github.com/zaru/webpush/compare/v0.3.7...v0.3.8)
 
