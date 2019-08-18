@@ -11,8 +11,7 @@ module Webpush
   # rubocop:disable Metrics/ClassLength
   class Request
     def initialize(message: '', subscription:, vapid:, **options)
-      endpoint = subscription.fetch(:endpoint)
-      @endpoint = endpoint.gsub(GCM_URL, TEMP_GCM_URL)
+      @endpoint = subscription.fetch(:endpoint)
       @payload = build_payload(message, subscription)
       @vapid_options = vapid
       @options = default_options.merge(options)
