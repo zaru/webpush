@@ -7,7 +7,9 @@
 
 This gem makes it possible to send push messages to web browsers from Ruby backends using the [Web Push Protocol](https://tools.ietf.org/html/draft-ietf-webpush-protocol-10). It supports [Message Encryption for Web Push](https://tools.ietf.org/html/draft-ietf-webpush-encryption) to send messages securely from server to user agent.
 
-Payload is supported by Chrome50+, Firefox48+.
+Payload is supported by Chrome 50+, Firefox 48+, Edge 79+.
+
+[webpush Demo app here (building by Sinatra app).](https://github.com/zaru/webpush_demo_ruby)
 
 ## Installation
 
