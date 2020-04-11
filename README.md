@@ -280,7 +280,7 @@ Webpush.payload_send(
   p256dh: "BO/aG9nYXNkZmFkc2ZmZHNmYWRzZmFl...",
   auth: "aW1hcmthcmFpa3V6ZQ==",
   vapid: {
-    subject: "mailto:sender@example.com"
+    subject: "mailto:sender@example.com",
     public_key: ENV['VAPID_PUBLIC_KEY'],
     private_key: ENV['VAPID_PRIVATE_KEY']
   }
