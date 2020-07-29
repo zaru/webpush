@@ -131,6 +131,20 @@ describe Webpush::Request do
     end
   end
 
+  describe '#proxy_options' do
+    it 'returns an array of proxy options' do
+      request = build_request(proxy: 'http://user:password@proxy_addr:8080')
+
+      expect(request.proxy_options).to eq(['proxy_addr', 8080, 'user', 'password'])
+    end
+
+    it 'returns empty array' do
+      request = build_request
+
+      expect(request.proxy_options).to be_empty
+    end
+  end
+
   def build_request(options = {})
     subscription = {
       endpoint: endpoint,
