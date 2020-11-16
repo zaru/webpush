@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'uri'
 require 'jwt'
 require 'base64'
 
@@ -20,7 +21,7 @@ module Webpush
 
     # rubocop:disable Metrics/AbcSize
     def perform
-      http = Net::HTTP.new(uri.host, uri.port)
+      http = Net::HTTP.new(uri.host, uri.port, *proxy_options)
       http.use_ssl = true
       http.ssl_timeout = @options[:ssl_timeout] unless @options[:ssl_timeout].nil?
       http.open_timeout = @options[:open_timeout] unless @options[:open_timeout].nil?
@@ -28,12 +29,21 @@ module Webpush
 
       req = Net::HTTP::Post.new(uri.request_uri, headers)
       req.body = body
+
       resp = http.request(req)
       verify_response(resp)
 
       resp
     end
     # rubocop:enable Metrics/AbcSize
+
+    def proxy_options
+      return [] unless @options[:proxy]
+
+      proxy_uri = URI.parse(@options[:proxy])
+
+      [proxy_uri.host, proxy_uri.port, proxy_uri.user, proxy_uri.password]
+    end
 
     # rubocop:disable Metrics/MethodLength
     def headers
