@@ -1,4 +1,16 @@
-# Change Log
+# Changelog
+
+## [v1.1.0](https://github.com/zaru/webpush/tree/v1.1.0) (2020-11-16)
+
+[Full Changelog](https://github.com/zaru/webpush/compare/v1.0.0...v1.1.0)
+
+**Merged pull requests:**
+
+- Eliminate Ruby 2.7 warnings. [\#95](https://github.com/zaru/webpush/pull/95) ([morgoth](https://github.com/morgoth))
+- set minimum ruby version is 2.2 [\#94](https://github.com/zaru/webpush/pull/94) ([Wolfer](https://github.com/Wolfer))
+- Add proxy support [\#93](https://github.com/zaru/webpush/pull/93) ([Bugagazavr](https://github.com/Bugagazavr))
+- fix syntax error [\#91](https://github.com/zaru/webpush/pull/91) ([tonytonyjan](https://github.com/tonytonyjan))
+- change dependency gem versions [\#88](https://github.com/zaru/webpush/pull/88) ([zaru](https://github.com/zaru))
 
 ## [v1.0.0](https://github.com/zaru/webpush/tree/v1.0.0) (2019-08-15)
 
