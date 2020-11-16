@@ -131,7 +131,7 @@ module Webpush
     def build_payload(message, subscription)
       return nil if message.nil? || message.empty?
 
-      encrypt_payload(message, subscription.fetch(:keys))
+      encrypt_payload(message, **subscription.fetch(:keys))
     end
 
     def encrypt_payload(message, p256dh:, auth:)
