@@ -78,10 +78,15 @@ module Webpush
     alias to_hash to_h
 
     def to_pem
-      public_key = OpenSSL::PKey::EC.new curve
-      public_key.private_key = nil
+      private_key_to_pem + public_key_to_pem
+    end
 
-      curve.to_pem + public_key.to_pem
+    def private_key_to_pem
+      curve.to_pem
+    end
+
+    def public_key_to_pem
+      curve.public_to_pem
     end
 
     def inspect
