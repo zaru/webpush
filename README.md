@@ -161,7 +161,7 @@ Imagine a Ruby app endpoint that responds to the request by triggering notificat
 
 ```ruby
 # app.rb
-# Use the webpush gem API to deliver a push notiifcation merging
+# Use the webpush gem API to deliver a push notification merging
 # the message, subscription values, and vapid options
 post "/push" do
   Webpush.payload_send(
