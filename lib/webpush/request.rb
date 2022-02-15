@@ -175,7 +175,7 @@ module Webpush
         raise Unauthorized.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPRequestEntityTooLarge) # 413
         raise PayloadTooLarge.new(resp, uri.host)
-      elsif resp.is_a?(Net::HTTPTooManyRequests) # 429, try again later!
+      elsif resp.is_a?(Net::HTTPTooManyRequests) || resp.is_a?(Net::HTTPNotAcceptable) # 429, try again later! or 406 from Microsoft
         raise TooManyRequests.new(resp, uri.host)
       elsif resp.is_a?(Net::HTTPServerError) # 5xx
         raise PushServiceError.new(resp, uri.host)
