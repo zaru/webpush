@@ -44,6 +44,12 @@ describe Webpush do
       expect { subject }.to raise_error(Webpush::TooManyRequests)
     end
 
+    it 'raises TooManyRequests if the API returns a 406 Error' do
+      stub_request(:post, expected_endpoint)
+        .to_return(status: 406, body: '', headers: {})
+      expect { subject }.to raise_error(Webpush::TooManyRequests)
+    end
+
     it 'raises PushServiceError if the API returns a 5xx Error' do
       stub_request(:post, expected_endpoint)
         .to_return(status: 500, body: '', headers: {})
