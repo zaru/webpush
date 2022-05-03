@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   
   spec.required_ruby_version = '>= 2.2'
 
-  spec.add_dependency 'hkdf', '~> 0.2'
+  spec.add_dependency 'hkdf', '~> 1.0'
   spec.add_dependency 'jwt', '~> 2.0'
 
   spec.add_development_dependency 'bundler', '>= 1.17.3'
