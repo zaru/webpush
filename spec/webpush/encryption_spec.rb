@@ -67,10 +67,10 @@ describe Webpush::Encryption do
       content_encryption_key_info = "Content-Encoding: aes128gcm\0"
       nonce_info = "Content-Encoding: nonce\0"
 
-      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: info).next_bytes(32)
+      prk = HKDF.new(shared_secret, salt: client_auth_token, algorithm: 'SHA256', info: info).read(32)
 
-      content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).next_bytes(16)
-      nonce = HKDF.new(prk, salt: salt, info: nonce_info).next_bytes(12)
+      content_encryption_key = HKDF.new(prk, salt: salt, info: content_encryption_key_info).read(16)
+      nonce = HKDF.new(prk, salt: salt, info: nonce_info).read(12)
 
       decrypt_ciphertext(ciphertext, content_encryption_key, nonce)
     end
