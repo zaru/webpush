@@ -11,8 +11,7 @@ module Webpush
       group_name = 'prime256v1'
       salt = Random.new.bytes(16)
 
-      server = OpenSSL::PKey::EC.new(group_name)
-      server.generate_key
+      server = OpenSSL::PKey::EC.generate(group_name)
       server_public_key_bn = server.public_key.to_bn
 
       group = OpenSSL::PKey::EC::Group.new(group_name)
