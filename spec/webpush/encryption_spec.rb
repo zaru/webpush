@@ -4,9 +4,7 @@ describe Webpush::Encryption do
   describe '#encrypt' do
     let(:curve) do
       group = 'prime256v1'
-      curve = OpenSSL::PKey::EC.new(group)
-      curve.generate_key
-      curve
+      OpenSSL::PKey::EC.generate(group)
     end
 
     let(:p256dh) do
