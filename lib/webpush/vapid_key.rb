@@ -10,8 +10,7 @@ module Webpush
     # @return [Webpush::VapidKey] a VapidKey instance for the given public and private keys
     def self.from_keys(public_key, private_key)
       key = new
-      key.public_key = public_key
-      key.private_key = private_key
+      key.set_keys!(public_key, private_key)
 
       key
     end
@@ -20,19 +19,14 @@ module Webpush
     #
     # @return [Webpush::VapidKey] a VapidKey instance for the given public and private keys
     def self.from_pem(pem)
-      key = new
-      src = OpenSSL::PKey.read pem
-      key.curve.public_key = src.public_key
-      key.curve.private_key = src.private_key
-
-      key
+      new(OpenSSL::PKey.read pem)
     end
 
     attr_reader :curve
 
-    def initialize
-      @curve = OpenSSL::PKey::EC.new('prime256v1')
-      @curve.generate_key
+    def initialize(pkey = nil)
+      @curve = pkey
+      @curve = OpenSSL::PKey::EC.generate('prime256v1') if @curve.nil?
     end
 
     # Retrieve the encoded elliptic curve public key for VAPID protocol
@@ -57,11 +51,11 @@ module Webpush
     end
 
     def public_key=(key)
-      curve.public_key = OpenSSL::PKey::EC::Point.new(group, to_big_num(key))
+      set_keys!(key, nil)
     end
 
     def private_key=(key)
-      curve.private_key = to_big_num(key)
+      set_keys!(nil, key)
     end
 
     def curve_name
@@ -78,14 +72,37 @@ module Webpush
     alias to_hash to_h
 
     def to_pem
-      public_key = OpenSSL::PKey::EC.new curve
-      public_key.private_key = nil
-
-      curve.to_pem + public_key.to_pem
+      curve.to_pem + curve.public_to_pem
     end
 
     def inspect
       "#<#{self.class}:#{object_id.to_s(16)} #{to_h.map { |k, v| ":#{k}=#{v}" }.join(' ')}>"
+    end
+
+    def set_keys!(public_key = nil, private_key = nil)
+      if public_key.nil?
+        public_key = curve.public_key
+      else
+        public_key = OpenSSL::PKey::EC::Point.new(group, to_big_num(public_key))
+      end
+
+      if private_key.nil?
+        private_key = curve.private_key
+      else
+        private_key = to_big_num(private_key)
+      end
+
+      asn1 = OpenSSL::ASN1::Sequence([
+        OpenSSL::ASN1::Integer.new(1),
+        # Not properly padded but OpenSSL doesn't mind
+        OpenSSL::ASN1::OctetString(private_key.to_s(2)),
+        OpenSSL::ASN1::ObjectId('prime256v1', 0, :EXPLICIT),
+        OpenSSL::ASN1::BitString(public_key.to_octet_string(:uncompressed), 1, :EXPLICIT),
+      ])
+
+      der = asn1.to_der
+
+      @curve = OpenSSL::PKey::EC.new(der)
     end
 
     private
