@@ -72,17 +72,7 @@ module Webpush
     alias to_hash to_h
 
     def to_pem
-      asn1 = OpenSSL::ASN1::Sequence([
-        OpenSSL::ASN1::Sequence([
-          OpenSSL::ASN1::ObjectId('id-ecPublicKey'),
-          OpenSSL::ASN1::ObjectId(curve_name),
-        ]),
-        OpenSSL::ASN1::BitString(curve.public_key.to_octet_string(:uncompressed))
-      ])
-
-      public_key = OpenSSL::PKey::EC.new(asn1.to_der)
-
-      curve.to_pem + public_key.to_pem
+      curve.to_pem + curve.public_to_pem
     end
 
     def inspect
